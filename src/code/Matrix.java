@@ -22,7 +22,7 @@ public class Matrix extends GeneralSearch {
 		int neoX = rand.nextInt(M);
 		int neoY = rand.nextInt(N);
 		int maxCarry = rand.nextInt(4) + 1; // Max number Neo can Carry
-		grid += maxCarry + ";" + neoX + "," + neoY + ";";
+		grid += maxCarry + ";" + neoX + "," + neoY + "," + 0 + ";";
 		gridArray[neoX][neoY] = true;
 		numberOfEmptyCells-=1;
 
