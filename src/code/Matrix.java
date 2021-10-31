@@ -22,7 +22,7 @@ public class Matrix extends GeneralSearch {
 		int neoX = rand.nextInt(M);
 		int neoY = rand.nextInt(N);
 		int maxCarry = rand.nextInt(4) + 1; // Max number Neo can Carry
-		grid += maxCarry + ";" + neoX + "," + neoY + "," + 0 + ";";
+		grid += maxCarry + ";" + neoX + "," + neoY + ";";
 		gridArray[neoX][neoY] = true;
 		numberOfEmptyCells-=1;
 
@@ -40,45 +40,20 @@ public class Matrix extends GeneralSearch {
 			}
 		}
 
-		// Generate Hostages
+		// Generate a Random number of Hostages
 		int numberOfHostages = rand.nextInt(6) + 4;
 		numberOfEmptyCells -= numberOfHostages;
 
-		int hostageX, hostageY, hostageDamage;
-		for (int i = 0 ; i < numberOfHostages ; i++) {
-			while (true) {
-				hostageX = rand.nextInt(M);
-				hostageY = rand.nextInt(N);
-				if (!gridArray[hostageX][hostageY]) {
-					hostageDamage = rand.nextInt(99) + 1;
-					gridArray[hostageX][hostageY] = true;
-					grid += hostageX + "," + hostageY + "," + hostageDamage;
-					break;
-				}
-			}
-			grid += (numberOfHostages == i+1) ? ";": ",";
-		}
-
-		// Generate Pills
+		// Generate a Random number of Pills
 		int numberOfPills = rand.nextInt(numberOfHostages) + 1;
 		numberOfEmptyCells -= numberOfPills;
 
-		int pillX, pillY;
-		for (int i = 0 ; i < numberOfPills ; i++) {
-			while (true) {
-				pillX = rand.nextInt(M);
-				pillY = rand.nextInt(N);
-				if (!gridArray[pillX][pillY]) {
-					gridArray[pillX][pillY] = true;
-					grid += pillX + "," + pillY;
-					break;
-				}
-			}
-			grid += (numberOfPills == i+1) ? ";": ",";
-		}
-
+		// Generate a Random number of Agents
 		int numberOfAgents = (numberOfEmptyCells <= numberOfHostages*2) ? (rand.nextInt(numberOfEmptyCells) + 1) : (rand.nextInt(numberOfHostages) + numberOfHostages);
 		numberOfEmptyCells -= numberOfAgents;
+
+		// Generate a Random number of Pads
+		int numberOfPadPairs = (numberOfEmptyCells >= 2) ? (Math.max(Math.min(rand.nextInt(numberOfEmptyCells)/ 2, 6), 1)) : 0;
 
 		int agentX, agentY;
 		for (int i = 0 ; i < numberOfAgents ; i++) {
@@ -94,7 +69,19 @@ public class Matrix extends GeneralSearch {
 			grid += (numberOfAgents == i+1) ? ";" : ",";
 		}
 
-		int numberOfPadPairs = (numberOfEmptyCells >= 2) ? (Math.max(Math.min(rand.nextInt(numberOfEmptyCells)/ 2, 6), 1)) : 0;
+		int pillX, pillY;
+		for (int i = 0 ; i < numberOfPills ; i++) {
+			while (true) {
+				pillX = rand.nextInt(M);
+				pillY = rand.nextInt(N);
+				if (!gridArray[pillX][pillY]) {
+					gridArray[pillX][pillY] = true;
+					grid += pillX + "," + pillY;
+					break;
+				}
+			}
+			grid += (numberOfPills == i+1) ? ";": ",";
+		}
 
 		int padX1, padY1, padX2, padY2;
 		boolean pairMatched = false;
@@ -112,6 +99,7 @@ public class Matrix extends GeneralSearch {
 							gridArray[padX2][padY2] = true;
 							pairMatched = true;
 							grid += padX1 + "," + padY1 + "," + padX2 + "," + padY2;
+							grid += "," + padX2 + "," + padY2 + "," + padX1 + "," + padY1;
 							break;
 						}
 					}
@@ -119,9 +107,28 @@ public class Matrix extends GeneralSearch {
 			}
 			grid += (numberOfPadPairs == i+1) ? ";" : ",";
 		}
-		grid += ";"; // space to add carried Hostages and Hostages mutated to Agents.
+
+		int hostageX, hostageY, hostageDamage;
+		for (int i = 0 ; i < numberOfHostages ; i++) {
+			while (true) {
+				hostageX = rand.nextInt(M);
+				hostageY = rand.nextInt(N);
+				if (!gridArray[hostageX][hostageY]) {
+					hostageDamage = rand.nextInt(99) + 1;
+					gridArray[hostageX][hostageY] = true;
+					grid += hostageX + "," + hostageY + "," + hostageDamage;
+					break;
+				}
+			}
+			grid += (numberOfHostages == i+1) ? ";": ",";
+		}
 
 		return grid;
+	}
+
+	public static Node createIntialNode(String grid) {
+		// Node intialNode = new Node();
+		return new Node(null, "", (short) 0);
 	}
 
 	public static void solve(String grid, String strategy, boolean visualize) {
@@ -136,7 +143,6 @@ public class Matrix extends GeneralSearch {
 	}
 
 	public static void main(String[] args) {
-		for (int i = 0; i < 100 ; i++)
-			System.out.println(Matrix.genGrid());
+		String grid = Matrix.genGrid();
 	}
 }
