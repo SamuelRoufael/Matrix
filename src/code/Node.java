@@ -6,6 +6,12 @@ public class Node {
 	private String state;
 	private short cost;
 	
+	public Node(Node parentNode, String state, short cost) {
+		this.parentNode = parentNode;
+		this.state = state;
+		this.cost = cost;
+	}
+	
 	public static int getNumberOfNodes() {
 		return numberOfNodes;
 	}
