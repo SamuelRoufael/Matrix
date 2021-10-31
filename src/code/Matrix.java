@@ -1,5 +1,4 @@
 package code;
-
 import java.util.Random;
 
 public class Matrix extends GeneralSearch {
@@ -27,15 +26,15 @@ public class Matrix extends GeneralSearch {
 		numberOfEmptyCells-=1;
 
 		// Choose a random position to spawn the Telephone booth given the grid boundaries.
-		int telephoneX ,telehoneY = 0;
+		int telephoneX ,telephoneY = 0;
 
 		while (true) {
 			telephoneX = rand.nextInt(M);
-			telehoneY = rand.nextInt(N);
-			if (!gridArray[telephoneX][telehoneY]) {
-				gridArray[telephoneX][telehoneY] = true;
+			telephoneY = rand.nextInt(N);
+			if (!gridArray[telephoneX][telephoneY]) {
+				gridArray[telephoneX][telephoneY] = true;
 				numberOfEmptyCells-=1;
-				grid += telephoneX + "," + telehoneY + ";";
+				grid += telephoneX + "," + telephoneY + ";";
 				break;
 			}
 		}
@@ -122,27 +121,38 @@ public class Matrix extends GeneralSearch {
 			}
 			grid += (numberOfHostages == i+1) ? ";": ",";
 		}
-
 		return grid;
-	}
-
-	public static Node createIntialNode(String grid) {
-		// Node intialNode = new Node();
-		return new Node(null, "", (short) 0);
 	}
 
 	public static void solve(String grid, String strategy, boolean visualize) {
 		Matrix matrix = new Matrix();
-		matrix.Search("", "");
+		Node initialNode = createInitialNode(grid);
+		matrix.Search(initialNode,"");
 	}
 
 	@Override
-	public Node Search(String grid, String str) {
-		// TODO Auto-generated method stub
+	public Node Search(Node node, String operation) {
 		return null;
 	}
 
+	public static Node createInitialNode(String grid) {
+		String [] gridArray = grid.split(";",8);
+		printArray(gridArray);
+		gridArray[2] = gridArray[2] + ",0";
+		printArray(gridArray);
+		String state = String.join(";", gridArray) + ";";
+		return new Node(null, state, (short) 0);
+	}
+
+	public static void printArray(String [] array) {
+		for (String s: array) {
+			System.out.println(s);
+		}
+	}
+
 	public static void main(String[] args) {
-		String grid = Matrix.genGrid();
+		String grid = genGrid();
+		Node initialNode = createInitialNode(grid);
+		System.out.println(initialNode.getState());
 	}
 }
