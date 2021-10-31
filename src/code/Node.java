@@ -1,5 +1,7 @@
 package code;
 
+import com.sun.xml.internal.bind.v2.TODO;
+
 public class Node {
 	private static int numberOfNodes;
 	private Node parentNode;
@@ -24,6 +26,9 @@ public class Node {
 	public short getCost() {
 		return cost;
 	}
-	
-	
+
+	public String removeObject(short x, short y) {
+		// TODO remove Agent, Hostage, Pill, Mutated hostage
+		return "";
+	}
 }
