@@ -3,6 +3,8 @@ import java.util.Random;
 
 public class Matrix extends GeneralSearch {
 
+	private static final String[] operators = {"up","down","right","left","kill","takePill","carry","drop"};
+
 	public static String genGrid() {
 		Random rand = new Random();
 
@@ -136,11 +138,10 @@ public class Matrix extends GeneralSearch {
 	}
 
 	public static Node createInitialNode(String grid) {
-		String [] gridArray = grid.split(";",8);
-		printArray(gridArray);
+		String [] gridArray = grid.split(";",10);
 		gridArray[2] = gridArray[2] + ",0";
-		printArray(gridArray);
 		String state = String.join(";", gridArray) + ";";
+		String [] sa = state.split(";",10);
 		return new Node(null, state, (short) 0);
 	}
 
@@ -149,10 +150,47 @@ public class Matrix extends GeneralSearch {
 			System.out.println(s);
 		}
 	}
+	public static String Carry(String state){
+		String [] arrayState = state.split(";", 10);
+		String [] hostages = arrayState[7].split(",");
+		String neoX = arrayState[2].charAt(0)+"";
+		String neoY = arrayState[2].charAt(2)+"";
+		String newHostages = "";
+		for(int i=0;i<hostages.length-2; i+=3) {
+			String xHostage = hostages[i];
+			String yHostage = hostages[i+1];
+			String hostageDamage = hostages[i+2];
 
+			if(xHostage.equals(neoX) && yHostage.equals(neoY)){
+				if (!arrayState[8].isEmpty())
+					arrayState[8] += ",";
+				arrayState[8] += hostageDamage;
+			}
+			else {
+				newHostages += xHostage + "," + yHostage + "," + hostageDamage + ",";
+			}
+		}
+		newHostages = newHostages.substring(0,newHostages.length() - 1);
+		arrayState[7] = newHostages;
+
+		return String.join(";", arrayState);
+	}
+
+	public static void Expand(Node node){
+		for (String operator : operators) {
+			if (operator.equals("carry")) {
+				//remove the hostage from the state and add the damage to the end of the state
+				String state = node.getState();
+				String[] splittedState = state.split(";");
+
+			}
+		}
+	}
 	public static void main(String[] args) {
 		String grid = genGrid();
 		Node initialNode = createInitialNode(grid);
-		System.out.println(initialNode.getState());
+		String testString = "8,9;1;2,2,0;1,6;7,3,1,0,7,2,4,5,1,7,5,3,5,4,3,8,6,4,3,1;6,8,3,5,2,8,7,5;2,2,20,8,0,8,4,7,1,8,6,1,6,1,1,8,2,6,1,5,1,5,2,6,7,4,6,0,6,0,7,4,6,5,7,8,7,8,6,5,4,1,5,8,5,8,4,1;2,2,95,5,0,69,2,5,94,1,4,8,3,7,37,1,1,54;;";
+		System.out.println(testString.length());
+		System.out.println(Carry(testString).length());
 	}
 }
