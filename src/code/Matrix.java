@@ -150,6 +150,7 @@ public class Matrix extends GeneralSearch {
 			System.out.println(s);
 		}
 	}
+
 	public static String Carry(String state){
 		String [] arrayState = state.split(";", 10);
 		String [] hostages = arrayState[7].split(",");
@@ -182,13 +183,27 @@ public class Matrix extends GeneralSearch {
 				//remove the hostage from the state and add the damage to the end of the state
 				String state = node.getState();
 				String[] splittedState = state.split(";");
-
 			}
 		}
 	}
 
+	public static boolean goalTest(Node node){
+		String [] neoPosDam = node.extractNeoPos();
+		String [] neoPos = new String[2];
+		neoPos[0] = neoPosDam[0];
+		neoPos[1] = neoPosDam[1];
+		String [] telBoothPos = node.extractTelBoothPos();
+		String [] hostages = node.extractHostages();
+		String [] mutatedHostages = node.extractMutatedHostagesPos();
 
-
+		// TODO : fix logical error here.
+		if(neoPos.equals(telBoothPos) && hostages == null && mutatedHostages == null){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
 
 	public static void main(String[] args) {
 		String grid = genGrid();
@@ -196,7 +211,5 @@ public class Matrix extends GeneralSearch {
 		String testString = "8,9;1;2,2,0;1,6;7,3,1,0,7,2,4,5,1,7,5,3,5,4,3,8,6,4,3,1;6,8,3,5,2,8,7,5;2,2,20,8,0,8,4,7,1,8,6,1,6,1,1,8,2,6,1,5,1,5,2,6,7,4,6,0,6,0,7,4,6,5,7,8,7,8,6,5,4,1,5,8,5,8,4,1;2,2,95,5,0,69,2,5,94,1,4,8,3,7,37,1,1,54;;";
 		System.out.println(testString.length());
 		System.out.println(Carry(testString).length());
-		//String [] array = extractPadPos(testString);
-		//System.out.println(array[0]);
 	}
 }
