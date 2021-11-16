@@ -3,7 +3,7 @@ import java.util.Random;
 
 public class Matrix extends GeneralSearch {
 
-	private static final String[] operators = {"up","down","right","left","kill","takePill","carry","drop"};
+	private static final String[] operators = {"up", "down", "right", "left", "kill", "takePill", "carry", "drop"};
 
 	public static String genGrid() {
 		Random rand = new Random();
@@ -141,7 +141,6 @@ public class Matrix extends GeneralSearch {
 		String [] gridArray = grid.split(";",10);
 		gridArray[2] = gridArray[2] + ",0";
 		String state = String.join(";", gridArray) + ";";
-		String [] sa = state.split(";",10);
 		return new Node(null, state, (short) 0);
 	}
 
@@ -209,7 +208,6 @@ public class Matrix extends GeneralSearch {
 		String grid = genGrid();
 		Node initialNode = createInitialNode(grid);
 		String testString = "8,9;1;2,2,0;1,6;7,3,1,0,7,2,4,5,1,7,5,3,5,4,3,8,6,4,3,1;6,8,3,5,2,8,7,5;2,2,20,8,0,8,4,7,1,8,6,1,6,1,1,8,2,6,1,5,1,5,2,6,7,4,6,0,6,0,7,4,6,5,7,8,7,8,6,5,4,1,5,8,5,8,4,1;2,2,95,5,0,69,2,5,94,1,4,8,3,7,37,1,1,54;;";
-		System.out.println(testString.length());
-		System.out.println(Carry(testString).length());
+		System.out.println("".split(",")[0].isEmpty());
 	}
 }
