@@ -187,6 +187,24 @@ public class Matrix extends GeneralSearch {
 		}
 	}
 
+	public static boolean goalTest(Node node){
+		String [] neoPosDam = node.extractNeoPos();
+		String [] neoPos = new String[2];
+		neoPos[0] = neoPosDam[0];
+		neoPos[1] = neoPosDam[1];
+		String [] telBoothPos = node.extractTelBoothPos();
+		String [] hostages = node.extractHostages();
+		String [] mutatedHostages = node.extractMutatedHostagesPos();
+
+		// TODO : fix logical error here.
+		if(neoPos.equals(telBoothPos) && hostages == null && mutatedHostages == null){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+
 	public static void main(String[] args) {
 		String grid = genGrid();
 		Node initialNode = createInitialNode(grid);
