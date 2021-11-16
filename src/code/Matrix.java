@@ -155,7 +155,7 @@ public class Matrix extends GeneralSearch {
 	public static String Carry(Node node){
 		String state = node.getState();
 		String [] arrayState = state.split(";", 10);
-		String [] hostages = node.extractHostages();
+		String [] hostages = node.extractHostagesPos();
 		String[] neoPosition = node.extractNeoPos();
 		String newHostages = "";
 		for(int i=0;i<hostages.length-2; i+=3) {
@@ -209,7 +209,7 @@ public class Matrix extends GeneralSearch {
 	}
 
 	public static String Fly(Node node){
-		return "";
+
 	}
 
 	public static Node Expand(Node node){
