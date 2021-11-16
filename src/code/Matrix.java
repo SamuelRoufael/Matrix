@@ -142,7 +142,6 @@ public class Matrix extends GeneralSearch {
 		String [] gridArray = grid.split(";",10);
 		gridArray[2] = gridArray[2] + ",0";
 		String state = String.join(";", gridArray) + ";";
-		String [] sa = state.split(";",10);
 		return new Node(null, state, (short) 0);
 	}
 
