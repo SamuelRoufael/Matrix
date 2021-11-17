@@ -301,7 +301,10 @@ public class Matrix extends GeneralSearch {
 					return new Node(node, newState, (short) 0);
 			}
 			if(operator.equals("Fly")){
-				Fly(node);
+				String state = node.getState();
+				String newState = Fly(node);
+				if(!state.equals(newState))
+					return new Node(node, newState, (short) 0);
 			}
 		}
 		return node;
@@ -330,7 +333,7 @@ public class Matrix extends GeneralSearch {
 		Node initialNode = createInitialNode(grid);
 		String testString = "11,5;1;2,0,0;2,1;3,2,7,4,0,3,8,0,7,1,2,2,5,4,1,4;2,0,8,2,8,4,0,2,9,1,9,0;2,0,2,3,2,3,2,0,0,4,4,2,4,2,0,4,6,0,0,1,0,1,6,0,2,4,0,0,0,0,2,4,6,1,3,4,3,4,6,1,4,0,3,3,3,3,4,0;7,0,36,6,4,35,5,3,60,8,1,82,5,2,73,3,0,16;27;";
 		Node node = new Node(initialNode.getParentNode(), testString, (short) 0);
-		System.out.println(Fly(node));
+		System.out.println(Expand(node).getState());
 		//System.out.println(Drop(node));
 		System.out.println(testString.length());
 
