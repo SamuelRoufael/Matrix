@@ -205,11 +205,70 @@ public class Matrix extends GeneralSearch {
 	}
 
 	public static String TakePill(Node node){
-		return "";
+		String state = node.getState();
+		String[] pillPosition = node.extractPillPos();
+		String[] neoPosition = node.extractNeoPos();
+		String[] hostages = node.extractHostages();
+		String[] carriedHostages = node.extractCarriedHostagesHP();
+		String[] arrayState = state.split(";", 10);
+		String newPills = "";
+		for(int i=0;i<pillPosition.length-1;i+=2){
+			String pillX = pillPosition[i];
+			String pillY = pillPosition[i+1];
+			if(pillX.equals(neoPosition[0]) && pillY.equals(neoPosition[1])){
+				for(int j=0; j<carriedHostages.length;j++){
+					if(Integer.parseInt(carriedHostages[j]) > 20)
+						carriedHostages[j] = (Integer.parseInt(carriedHostages[j]) - 20) + "";
+					else
+						carriedHostages[j] = "0";
+				}
+				for(int j=0;j<hostages.length-2;j+=3){
+					System.out.println(hostages[j] + " " + hostages[j+1] + " " + hostages[j+2]);
+					if(Integer.parseInt(hostages[j+2]) > 20)
+						hostages[j+2] = (Integer.parseInt(hostages[j+2]) - 20) + "";
+					else
+						hostages[j+2] = "0";
+				}
+				if(Integer.parseInt(neoPosition[2]) > 20)
+					neoPosition[2] = (Integer.parseInt(neoPosition[2]) - 20) + "";
+				else
+					neoPosition[2] = "0";
+
+			}
+			else
+				newPills += pillX + ',' + pillY + ',';
+			arrayState[2] = String.join(",", neoPosition);
+			arrayState[7] = String.join(",", hostages);
+			arrayState[8] = String.join(",", carriedHostages);
+			arrayState[5] = newPills;
+
+		}
+		return String.join(";", arrayState);
 	}
 
 	public static String Fly(Node node){
-		return "";
+		String state = node.getState();
+		String[] neoPosition = node.extractNeoPos();
+		String[] padsPosition = node.extractPadPos();
+		String[] arrayState = state.split(";", 10);
+		for(int i=0; i<padsPosition.length-1;i+=4){
+			String padX1 = padsPosition[i];
+			String padY1 = padsPosition[i+1];
+			String padX2 = padsPosition[i+2];
+			String padY2 = padsPosition[i+3];
+			if(neoPosition[0].equals(padX1) && neoPosition[1].equals(padY1)){
+				neoPosition[0] = padX2;
+				neoPosition[1] = padY2;
+				break;
+			}
+			else if(neoPosition[0].equals(padX2) && neoPosition[1].equals(padY2)){
+				neoPosition[0] = padX1;
+				neoPosition[1] = padY1;
+				break;
+			}
+		}
+		arrayState[2] = String.join(",", neoPosition);
+		return String.join(";", arrayState);
 	}
 
 	public static Node Expand(Node node){
@@ -236,7 +295,10 @@ public class Matrix extends GeneralSearch {
 				Kill(node);
 			}
 			if(operator.equals("TakePill")){
-				TakePill(node);
+				String state = node.getState();
+				String newState = TakePill(node);
+				if(!state.equals(newState))
+					return new Node(node, newState, (short) 0);
 			}
 			if(operator.equals("Fly")){
 				Fly(node);
@@ -266,10 +328,10 @@ public class Matrix extends GeneralSearch {
 	public static void main(String[] args) {
 		String grid = genGrid();
 		Node initialNode = createInitialNode(grid);
-		String testString = "8,9;1;2,2,0;2,2;7,3,1,0,7,2,4,5,1,7,5,3,5,4,3,8,6,4,3,1;6,8,3,5,2,8,7,5;2,2,20,8,0,8,4,7,1,8,6,1,6,1,1,8,2,6,1,5,1,5,2,6,7,4,6,0,6,0,7,4,6,5,7,8,7,8,6,5,4,1,5,8,5,8,4,1;5,0,69,2,5,94,1,4,8,3,7,37,1,1,54;95;";
+		String testString = "11,5;1;2,0,0;2,1;3,2,7,4,0,3,8,0,7,1,2,2,5,4,1,4;2,0,8,2,8,4,0,2,9,1,9,0;2,0,2,3,2,3,2,0,0,4,4,2,4,2,0,4,6,0,0,1,0,1,6,0,2,4,0,0,0,0,2,4,6,1,3,4,3,4,6,1,4,0,3,3,3,3,4,0;7,0,36,6,4,35,5,3,60,8,1,82,5,2,73,3,0,16;27;";
 		Node node = new Node(initialNode.getParentNode(), testString, (short) 0);
-		System.out.println(Carry(node));
-		System.out.println(Drop(node));
+		System.out.println(Fly(node));
+		//System.out.println(Drop(node));
 		System.out.println(testString.length());
 
 	}
