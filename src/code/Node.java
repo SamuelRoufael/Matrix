@@ -48,7 +48,7 @@ public class Node {
 		String [] array = state.split(";", 10);
 		String posPills = array[5];
 		String [] pillPos = posPills.split(",");
-		return (pillPos[0].isEmpty()) ? null : pillPos ;
+		return (pillPos[0].isEmpty()) ? new String[0] : pillPos ;
 	}
 
 	public String[] extractPadPos(){
@@ -61,21 +61,21 @@ public class Node {
 		String [] array = state.split(";", 10);
 		String posHos = array[7];
 		String [] hosPos = posHos.split(",");
-		return hosPos[0].isEmpty() ? null : hosPos;
+		return hosPos[0].isEmpty() ? new String[0] : hosPos;
 	}
 
 	public String[] extractCarriedHostagesHP(){
 		String [] array = state.split(";", 10);
 		String hpHos = array[8];
 		String [] carriedHosHP = hpHos.split(",");
-		return carriedHosHP[0].isEmpty() ? null : carriedHosHP;
+		return carriedHosHP[0].isEmpty() ? new String[0] : carriedHosHP;
 	}
 
 	public String[] extractMutatedHostagesPos(){
 		String [] array = state.split(";", 10);
 		String posMutatedHos = array[9];
 		String [] mutatedHosPos = posMutatedHos.split(",");
-		return mutatedHosPos[0].isEmpty() ? null : mutatedHosPos;
+		return mutatedHosPos[0].isEmpty() ? new String[0] : mutatedHosPos;
 	}
 
 	public String getState() {
