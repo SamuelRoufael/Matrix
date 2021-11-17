@@ -2,46 +2,17 @@ package code;
 
 public class Node {
 
-	private Node parentNode;
-	private String state;
-	private String operator;
-	private int pathCost;
-	private int depth;
-	private int heuristicCost;
-	private int priority;
+	private Node parentNode = null;
+	private String state = "";
+	private String operator = null;
+	private int pathCost = 0;
+	private int depth = 0;
+	private int heuristicCost = 0;
+	private int priority = 0;
 
-	public Node(Node parentNode, String state, int pathCost) {
+	public Node(Node parentNode, String state) {
 		this.parentNode = parentNode;
 		this.state = state;
-		this.pathCost = pathCost;
-	}
-
-	public String getState() {
-		return state;
-	}
-
-	public String getOperator() {
-		return operator;
-	}
-
-	public int getPathCost() {
-		return pathCost;
-	}
-
-	public int getDepth() {
-		return depth;
-	}
-
-	public int getHeuristicCost() {
-		return heuristicCost;
-	}
-
-	public Node getParentNode() {
-		return parentNode;
-	}
-
-	public int getPriority() {
-		return priority;
 	}
 
 	public String[] extractGridSize(){
@@ -105,5 +76,53 @@ public class Node {
 		String posMutatedHos = array[9];
 		String [] mutatedHosPos = posMutatedHos.split(",");
 		return mutatedHosPos[0].isEmpty() ? null : mutatedHosPos;
+	}
+
+	public String getState() {
+		return state;
+	}
+
+	public String getOperator() {
+		return operator;
+	}
+
+	public int getPathCost() {
+		return pathCost;
+	}
+
+	public int getDepth() {
+		return depth;
+	}
+
+	public int getHeuristicCost() {
+		return heuristicCost;
+	}
+
+	public Node getParentNode() {
+		return parentNode;
+	}
+
+	public int getPriority() {
+		return priority;
+	}
+
+	public void setPathCost(int pathCost) {
+		this.pathCost = pathCost;
+	}
+
+	public void setDepth(int depth) {
+		this.depth = depth;
+	}
+
+	public void setHeuristicCost(int heuristicCost) {
+		this.heuristicCost = heuristicCost;
+	}
+
+	public void setPriority(int priority) {
+		this.priority = priority;
+	}
+
+	public void setOperator(String operator) {
+		this.operator = operator;
 	}
 }
