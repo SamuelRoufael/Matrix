@@ -1,4 +1,6 @@
 package code;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 public class Matrix extends GeneralSearch {
@@ -142,7 +144,7 @@ public class Matrix extends GeneralSearch {
 		String [] gridArray = grid.split(";",10);
 		gridArray[2] = gridArray[2] + ",0";
 		String state = String.join(";", gridArray) + ";";
-		return new Node(null, state, (short) 0);
+		return new Node(null, state);
 	}
 
 	public static void printArray(String [] array) {
@@ -155,14 +157,14 @@ public class Matrix extends GeneralSearch {
 		String state = node.getState();
 		String [] arrayState = state.split(";", 10);
 		String [] hostages = node.extractHostages();
-		String[] neoPosition = node.extractNeoPos();
+		String [] neoPosition = node.extractNeoPos();
 		String newHostages = "";
 		for(int i=0;i<hostages.length-2; i+=3) {
 			String xHostage = hostages[i];
 			String yHostage = hostages[i+1];
 			String hostageDamage = hostages[i+2];
 
-			if(xHostage.equals(neoPosition[0]) && yHostage.equals(neoPosition[1])){
+			if(xHostage.equals(neoPosition[0]) && yHostage.equals(neoPosition[1])) {
 				if (!arrayState[8].isEmpty())
 					arrayState[8] += ",";
 				arrayState[8] += hostageDamage;
@@ -199,8 +201,70 @@ public class Matrix extends GeneralSearch {
 		return String.join(";", stateArray);
 	}
 
-	public static String Kill(Node node){
-		return "";
+	public static String Kill(Node node) {
+		String [] stateArray = node.getState().split(";",10);
+		ArrayList<String> agents = new ArrayList<String>(Arrays.asList(node.extractAgentsPos()));
+		ArrayList<String> mutatedHostages = new ArrayList<String>(Arrays.asList(node.extractMutatedHostagesPos()));
+		String [] neo = node.extractNeoPos();
+		boolean killedSomeOne = false;
+
+		for (int i = 0 ; i < mutatedHostages.size() - 1 ; i+=2) {
+			if (neo[0].equals(mutatedHostages.get(i)) && neo[1].equals(mutatedHostages.get(i+1))) {
+				mutatedHostages.remove(i);
+				mutatedHostages.remove(i+1);
+				i-=2;
+				killedSomeOne = true;
+			}
+		}
+
+		for (int i = 0 ; i < agents.size() - 1 ; i+=2) {
+			if (neo[0].equals(agents.get(i)) && neo[1].equals(agents.get(i+1))) {
+				agents.remove(i);
+				agents.remove(i+1);
+				i-=2;
+				killedSomeOne = true;
+			}
+		}
+
+		// Update Neo's and all living hostages (Either carried by Neo or somewhere in the gird) if neo killed someone.
+		if (killedSomeOne) {
+			int neoDamage = Integer.parseInt(neo[2]);
+			neoDamage += 20;
+			neo[2] = neoDamage + "";
+			stateArray[2] =  String.join(",", neo);
+
+			ArrayList<String> hostages = new ArrayList<String>(Arrays.asList(node.extractHostages()));
+			for (int i = 0 ; i < hostages.size() - 2 ; i+=3) {
+				int damage = Integer.parseInt(hostages.get(i+2));
+				damage += 20;
+				if (damage < 100) {
+					hostages.set(i+2,damage+"");
+				}
+				else {
+					mutatedHostages.add(hostages.remove(i));
+					mutatedHostages.add(hostages.remove(i+1));
+					hostages.remove(i+2);
+					i-=3;
+				}
+			}
+			String newHostages = String.join(",", hostages);
+			stateArray[7] = newHostages;
+
+			ArrayList<String> carriedHostages = new ArrayList<String>(Arrays.asList(node.extractCarriedHostagesHP()));
+			for (int i = 0 ; i < carriedHostages.size() ; i++) {
+				int damage = Integer.parseInt(carriedHostages.get(i));
+				damage = Math.min(100, damage + 20);
+				carriedHostages.set(i, damage+"");
+			}
+			stateArray[8] = String.join(";", carriedHostages);
+		}
+
+		String newAgentsString = String.join(",", agents);
+		String newMutatedHostagesString = String.join(",", mutatedHostages);
+		stateArray[4] = newAgentsString;
+		stateArray[9] = newMutatedHostagesString;
+
+		return String.join(";", stateArray);
 	}
 
 	public static String TakePill(Node node){
@@ -218,18 +282,18 @@ public class Matrix extends GeneralSearch {
 				String state = node.getState();
 				//check if neo reached maximum carry capacity
 				String[] carriedHostages = node.extractCarriedHostagesHP();
-				String[] maxCarry = node.extractMaxNoOfCarry();
-				if(carriedHostages.length == Integer.parseInt(maxCarry[0]))
+				String maxCarry = node.extractMaxNoOfCarry();
+				if(carriedHostages.length == Integer.parseInt(maxCarry))
 					break;
 				String newState = Carry(node);
 				if(!state.equals(newState))
-					return new Node(node, newState, (short) 0);
+					return new Node(node, newState);
 			}
 			if(operator.equals("Drop")){
 				String state = node.getState();
 				String newState = Drop(node);
 				if(!state.equals(newState))
-					return new Node(node, newState, (short) 0);
+					return new Node(node, newState);
 			}
 			if(operator.equals("Kill")){
 				Kill(node);
@@ -266,10 +330,9 @@ public class Matrix extends GeneralSearch {
 		String grid = genGrid();
 		Node initialNode = createInitialNode(grid);
 		String testString = "8,9;1;2,2,0;2,2;7,3,1,0,7,2,4,5,1,7,5,3,5,4,3,8,6,4,3,1;6,8,3,5,2,8,7,5;2,2,20,8,0,8,4,7,1,8,6,1,6,1,1,8,2,6,1,5,1,5,2,6,7,4,6,0,6,0,7,4,6,5,7,8,7,8,6,5,4,1,5,8,5,8,4,1;5,0,69,2,5,94,1,4,8,3,7,37,1,1,54;95;";
-		Node node = new Node(initialNode.getParentNode(), testString, (short) 0);
-		System.out.println(Carry(node));
-		System.out.println(Drop(node));
-		System.out.println(testString.length());
-
+//		System.out.println(Carry(node));
+//		System.out.println(Drop(node));
+//		System.out.println(initialNode.getState());
+//		System.out.println(Kill(initialNode));
 	}
 }
