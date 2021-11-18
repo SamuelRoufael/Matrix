@@ -154,16 +154,23 @@ public class Matrix extends GeneralSearch {
 		}
 	}
 
-	private String [] AvailableOperators(Node node) {
+	private ArrayList<String> AvailableOperators(Node node) {
 		ArrayList<String> availableOperators = new ArrayList<String>(Arrays.asList(operators));
+		String [] hostages = node.extractHostages();
+		String [] neo = node.extractNeoPos();
 
 		for (String operator : operators) {
 			if (operator.equals("Kill")) {
-
+				for (int i = 0 ; i < hostages.length - 2 ; i+=3) {
+					if (neo[0].equals(hostages[i]) && neo[1].equals(hostages[i+1])) {
+						int hostageDamage = Integer.parseInt(hostages[i+2]);
+						if (hostageDamage >= 98)
+							availableOperators.remove("Kill");
+					}
+				}
 			}
 		}
-
-		return new String[0];
+		return availableOperators;
 	}
 
 	public static String Carry(Node node){
