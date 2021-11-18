@@ -367,7 +367,7 @@ public class Matrix extends GeneralSearch {
 				String state = node.getState();
 				String newState = Fly(node);
 				if(!state.equals(newState))
-					return new Node(node, newState, (short) 0);
+					return new Node(node, newState);
 			}
 		}
 		return node;
