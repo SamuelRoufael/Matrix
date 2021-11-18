@@ -5,7 +5,7 @@ import java.util.Random;
 
 public class Matrix extends GeneralSearch {
 
-	private static final String[] operators = {"Up", "Down", "Right", "Left", "Kill", "TakePill", "Carry", "Drop", "Fly"};
+	private static final String[] operators = {"Up","Down","Right","Left","Kill","TakePill","Carry","Drop","Fly"};
 	private static int deaths = 0;
 	private static int kills = 0;
 
@@ -32,7 +32,7 @@ public class Matrix extends GeneralSearch {
 		numberOfEmptyCells-=1;
 
 		// Choose a random position to spawn the Telephone booth given the grid boundaries.
-		int telephoneX ,telephoneY = 0;
+		int telephoneX ,telephoneY;
 
 		while (true) {
 			telephoneX = rand.nextInt(M);
@@ -89,7 +89,7 @@ public class Matrix extends GeneralSearch {
 		}
 
 		int padX1, padY1, padX2, padY2;
-		boolean pairMatched = false;
+		boolean pairMatched;
 		for (int i = 0 ; i < numberOfPadPairs ; i++) {
 			pairMatched = false;
 			while (!pairMatched) {
@@ -155,9 +155,14 @@ public class Matrix extends GeneralSearch {
 	}
 
 	private ArrayList<String> AvailableOperators(Node node) {
-		ArrayList<String> availableOperators = new ArrayList<String>(Arrays.asList(operators));
+		ArrayList<String> availableOperators = new ArrayList<>(Arrays.asList(operators));
 		String [] hostages = node.extractHostages();
 		String [] neo = node.extractNeoPos();
+		String maxCarry = node.extractMaxNoOfCarry();
+		String [] carriedHostages = node.extractCarriedHostagesHP();
+		String [] telephoneBooth = node.extractTelBoothPos();
+		String [] pills = node.extractPillPos();
+		String [] pads = node.extractPadPos();
 
 		for (String operator : operators) {
 			if (operator.equals("Kill")) {
@@ -168,6 +173,50 @@ public class Matrix extends GeneralSearch {
 							availableOperators.remove("Kill");
 					}
 				}
+			}
+
+			if(operator.equals("Carry")){
+				if(!(carriedHostages.length == Integer.parseInt(maxCarry)))
+					availableOperators.remove("Carry");
+			}
+
+			if(operator.equals("Drop")){
+				if(!(neo[0].equals(telephoneBooth[0]) && neo[1].equals(telephoneBooth[1])))
+					availableOperators.remove("Drop");
+			}
+
+			if(operator.equals("TakePill")){
+				for (int i = 0; i < pills.length-1; i += 2)
+					if(!(neo[0].equals(pills[i]) && neo[1].equals(pills[i+1])))
+						availableOperators.remove("TakePill");
+			}
+
+			if(operator.equals("Fly")){
+				for(int i = 0; i < pads.length - 3; i += 4)
+					if(!(neo[0].equals(pads[i]) && neo[1].equals(pads[i+1])))
+						if(!(neo[0].equals(pads[i+2]) && neo[1].equals(pads[i+3])))
+							availableOperators.remove("Fly");
+			}
+
+			if(operator.equals("Up")){
+				if(node.getOperator().equals("Down")){
+					availableOperators.remove("Up");
+				}
+			}
+
+			if(operator.equals("Down")){
+				if(node.getOperator().equals("Up"))
+					availableOperators.remove("Down");
+			}
+
+			if(operator.equals("Right")){
+				if(node.getOperator().equals("Left"))
+					availableOperators.remove("Right");
+			}
+
+			if(operator.equals("Left")){
+				if(node.getOperator().equals("Right"))
+					availableOperators.remove("Left");
 			}
 		}
 		return availableOperators;
@@ -196,7 +245,7 @@ public class Matrix extends GeneralSearch {
 		newHostages = newHostages.substring(0,newHostages.length() - 1);
 		arrayState[7] = newHostages;
 
-		return String.join(";", arrayState);
+		return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
 	}
 
 	public static String Drop(Node node){
@@ -211,14 +260,14 @@ public class Matrix extends GeneralSearch {
 				neoAtTeleBooth = true;
 		}
 		if(neoAtTeleBooth){
-			if(carriedHostages.length > 0) {
+			if(carriedHostages != null) {
 				for (String carriedHostage : carriedHostages)
 					if (Integer.parseInt(carriedHostage) == 100)
 						deaths += 1;
 				stateArray[8] = "";
 			}
 		}
-		return String.join(";", stateArray);
+		return String.join(";", stateArray).equals(state) ? null : String.join(";", stateArray);
 	}
 
 	private static boolean IsAdjacent(String neoX, String neoY, String agentX, String agentY) {
@@ -234,8 +283,8 @@ public class Matrix extends GeneralSearch {
 
 	public static String Kill(Node node) {
 		String [] stateArray = node.getState().split(";",10);
-		ArrayList<String> agents = new ArrayList<String>(Arrays.asList(node.extractAgentsPos()));
-		ArrayList<String> mutatedHostages = new ArrayList<String>(Arrays.asList(node.extractMutatedHostagesPos()));
+		ArrayList<String> agents = new ArrayList<>(Arrays.asList(node.extractAgentsPos()));
+		ArrayList<String> mutatedHostages = new ArrayList<>(Arrays.asList(node.extractMutatedHostagesPos()));
 		String [] hostages = node.extractHostages();
 		String [] neo = node.extractNeoPos();
 		boolean killedSomeOne = false;
@@ -287,9 +336,9 @@ public class Matrix extends GeneralSearch {
 
 	private Node UpdateDamage(Node node) {
 		String [] stateArray = node.getState().split(";",10);
-		ArrayList<String> hostages = new ArrayList<String>(Arrays.asList(node.extractHostages()));
-		ArrayList<String> carriedHostages = new ArrayList<String>(Arrays.asList(node.extractCarriedHostagesHP()));
-		ArrayList<String> mutatedHostages = new ArrayList<String>(Arrays.asList(node.extractMutatedHostagesPos()));
+		ArrayList<String> hostages = new ArrayList<>(Arrays.asList(node.extractHostages()));
+		ArrayList<String> carriedHostages = new ArrayList<>(Arrays.asList(node.extractCarriedHostagesHP()));
+		ArrayList<String> mutatedHostages = new ArrayList<>(Arrays.asList(node.extractMutatedHostagesPos()));
 
 		for (int i = 0 ; i < hostages.size() - 2 ; i+=3) {
 			int damage = Integer.parseInt(hostages.get(i+2));
@@ -356,7 +405,7 @@ public class Matrix extends GeneralSearch {
 			arrayState[5] = newPills;
 
 		}
-		return String.join(";", arrayState);
+		return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
 	}
 
 	public static String Fly(Node node){
@@ -381,7 +430,7 @@ public class Matrix extends GeneralSearch {
 			}
 		}
 		arrayState[2] = String.join(",", neoPosition);
-		return String.join(";", arrayState);
+		return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
 	}
 
 	public static Node Expand(Node node){
@@ -389,11 +438,6 @@ public class Matrix extends GeneralSearch {
 			if (operator.equals("Carry")) {
 				//remove the hostage from the state and add the damage to the end of the state
 				String state = node.getState();
-				//check if neo reached maximum carry capacity
-				String[] carriedHostages = node.extractCarriedHostagesHP();
-				String maxCarry = node.extractMaxNoOfCarry();
-				if(carriedHostages.length == Integer.parseInt(maxCarry))
-					break;
 				String newState = Carry(node);
 				if(!state.equals(newState))
 					return new Node(node, newState);
@@ -433,7 +477,7 @@ public class Matrix extends GeneralSearch {
 		String [] mutatedHostages = node.extractMutatedHostagesPos();
 
 		// TODO : fix logical error here.
-		if(neoPos.equals(telBoothPos) && hostages == null && mutatedHostages == null) {
+		if(neoPos.equals(telBoothPos) && hostages == null && mutatedHostages == null){
 			return true;
 		}
 		else{
@@ -441,18 +485,13 @@ public class Matrix extends GeneralSearch {
 		}
 	}
 
-	private static boolean gameOver(Node node) {
-		String [] neo = node.extractNeoPos();
-		return  Integer.parseInt(neo[2]) == 100;
-	}
-
 	public static void main(String[] args) {
 		String grid = genGrid();
 		Node initialNode = createInitialNode(grid);
-		String testString = "9,14;1;7,11,0;8,4;7,10,7,15,6,14,9,11,3,6,6,2;0,5,3,13,1,4;6,13,1,0,1,0,6,13,8,13,0,12,0,12,8,13,3,0,6,11,6,11,3,0,5,0,8,6,8,6,5,0,4,9,5,9,5,9,4,9,1,11,3,9,3,9,1,11;2,11,39,1,9,93,8,0,94,7,1,32;;";
-		Node node = new Node(initialNode.getParentNode(), testString);
-		System.out.println(Kill(node));
-
+		String testString = "8,9;1;2,2,0;2,2;7,3,1,0,7,2,4,5,1,7,5,3,5,4,3,8,6,4,3,1;6,8,3,5,2,8,7,5;2,2,20,8,0,8,4,7,1,8,6,1,6,1,1,8,2,6,1,5,1,5,2,6,7,4,6,0,6,0,7,4,6,5,7,8,7,8,6,5,4,1,5,8,5,8,4,1;5,0,69,2,5,94,1,4,8,3,7,37,1,1,54;95;";
+//		System.out.println(Carry(node));
+//		System.out.println(Drop(node));
+//		System.out.println(initialNode.getState());
 //		System.out.println(Kill(initialNode));
 	}
 }
