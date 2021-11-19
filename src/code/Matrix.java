@@ -267,6 +267,29 @@ public class Matrix extends GeneralSearch {
             if (!state.equals(newState))
                 return new Node(node, newState);
         }
+        if (operator.equals("Up")) {
+            String state = node.getState();
+            String newState = Up(node);
+            if (!state.equals(newState))
+                return new Node(node, newState);
+        }
+        if (operator.equals("Down")) {
+            String state = node.getState();
+            String newState = Down(node);
+            if (!state.equals(newState))
+                return new Node(node, newState);
+        }
+        if (operator.equals("Right")) {
+            String state = node.getState();
+            String newState = Right(node);
+            if (!state.equals(newState))
+                return new Node(node, newState);
+        } if (operator.equals("Left")) {
+            String state = node.getState();
+            String newState = Left(node);
+            if (!state.equals(newState))
+                return new Node(node, newState);
+        }
         return node;
     }
 
@@ -430,6 +453,74 @@ public class Matrix extends GeneralSearch {
             return true;
         else return neoYInt == agentYInt && (neoXInt == agentXInt + 1 || neoXInt == agentXInt - 1);
     }
+    public static String Up(Node node){
+        String state = node.getState();
+        String[] neoPosition = node.extractNeoPos();
+        String[] hostages = node.extractHostages();
+        String[] arrayState = state.split(";", 10);
+
+        ArrayList<String> availableOperations = AvailableOperators(node);
+
+        if(availableOperations.contains("Up")) {
+            for (int i = 0; i < hostages.length - 2; i += 3) {
+                int hostageY = hostages[i + 1];
+                if (neo[0].equals(hostages[i]) && neo[1].equals(hostageY - 1) && availableoperators(node)) {
+                    neoPosition[1] = hostages[i + 1];
+                }
+            }
+            arrayState[2] = String.join(",", neoPosition);
+            return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
+        }
+    }
+    public static String Down(Node node){
+        String state = node.getState();
+        String[] neoPosition = node.extractNeoPos();
+        String[] hostages = node.extractHostages();
+        String[] arrayState = state.split(";", 10);
+        if(availableOperations.contains("Down")) {
+            for (int i = 0; i < hostages.length - 2; i += 3) {
+                int hostageY = hostages[i + 1];
+                if (neo[0].equals(hostages[i]) && neo[1].equals(hostageY + 1)) {
+                    neoPosition[1] = hostages[i + 1];
+                }
+            }
+            arrayState[2] = String.join(",", neoPosition);
+            return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
+        }
+    }
+    public static String Left(Node node){
+        String state = node.getState();
+        String[] neoPosition = node.extractNeoPos();
+        String[] hostages = node.extractHostages();
+        String[] arrayState = state.split(";", 10);
+        if(availableOperations.contains("Left")) {
+            for (int i = 0; i < hostages.length - 2; i += 3) {
+                int hostageX = hostages[i];
+                if (neo[1].equals(hostages[i + 1]) && neo[0].equals(hostageX - 1)) {
+                    neoPosition[0] = hostages[i];
+                }
+            }
+            arrayState[2] = String.join(",", neoPosition);
+            return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
+        }
+    }
+    public static String Right(Node node){
+        String state = node.getState();
+        String[] neoPosition = node.extractNeoPos();
+        String[] hostages = node.extractHostages();
+        String[] arrayState = state.split(";", 10);
+        if(availableOperations.contains("Right")) {
+            for (int i = 0; i < hostages.length - 2; i += 3) {
+                int hostageX = hostages[i];
+                if (neo[1].equals(hostages[i + 1]) && neo[0].equals(hostageX + 1)) {
+                    neoPosition[0] = hostages[i];
+                }
+            }
+            arrayState[2] = String.join(",", neoPosition);
+            return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
+        }
+    }
+
 
     public static String Kill(Node node) {
         String[] stateArray = node.getState().split(";", 10);
