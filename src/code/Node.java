@@ -1,6 +1,6 @@
 package code;
 
-public class Node implements Comparable<Node>{
+public class Node implements Comparable<Node> {
 
 	private Node parentNode = null;
 	private String state = "";
