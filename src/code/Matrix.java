@@ -477,6 +477,9 @@ public class Matrix extends GeneralSearch {
         String[] neoPosition = node.extractNeoPos();
         String[] hostages = node.extractHostages();
         String[] arrayState = state.split(";", 10);
+
+        ArrayList<String> availableOperations = AvailableOperators(node);
+
         if(availableOperations.contains("Down")) {
             for (int i = 0; i < hostages.length - 2; i += 3) {
                 int hostageY = hostages[i + 1];
@@ -493,6 +496,9 @@ public class Matrix extends GeneralSearch {
         String[] neoPosition = node.extractNeoPos();
         String[] hostages = node.extractHostages();
         String[] arrayState = state.split(";", 10);
+
+        ArrayList<String> availableOperations = AvailableOperators(node);
+
         if(availableOperations.contains("Left")) {
             for (int i = 0; i < hostages.length - 2; i += 3) {
                 int hostageX = hostages[i];
@@ -509,6 +515,9 @@ public class Matrix extends GeneralSearch {
         String[] neoPosition = node.extractNeoPos();
         String[] hostages = node.extractHostages();
         String[] arrayState = state.split(";", 10);
+
+        ArrayList<String> availableOperations = AvailableOperators(node);
+
         if(availableOperations.contains("Right")) {
             for (int i = 0; i < hostages.length - 2; i += 3) {
                 int hostageX = hostages[i];
