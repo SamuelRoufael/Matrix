@@ -464,7 +464,7 @@ public class Matrix extends GeneralSearch {
         if(availableOperations.contains("Up")) {
             for (int i = 0; i < hostages.length - 2; i += 3) {
                 int hostageY = hostages[i + 1];
-                if (neo[0].equals(hostages[i]) && neo[1].equals(hostageY - 1) && availableoperators(node)) {
+                if (neo[0].equals(hostages[i]) && neo[1].equals(hostageY - 1) ) {
                     neoPosition[1] = hostages[i + 1];
                 }
             }
