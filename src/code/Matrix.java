@@ -382,6 +382,56 @@ public class Matrix extends GeneralSearch {
         return toBeRemovedMoves;
     }
 
+    public static String up(Node node){
+        String state = node.getState();
+        String[] arrayState = state.split(";", 10);
+        String[] Neopos = node.extractNeoPos();
+        String newNeoPos = "";
+        int newNeoPosix = Integer.parseInt(Neopos[0]);
+        newNeoPosix--;
+        newNeoPos +=  newNeoPosix + "," + Neopos[1];
+        arrayState[0] = newNeoPos;
+        return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
+    }
+
+    public static String down(Node node){
+        String state = node.getState();
+        String[] arrayState = state.split(";", 10);
+        String[] Neopos = node.extractNeoPos();
+        String newNeoPos = "";
+        int newNeoPosix = Integer.parseInt(Neopos[0]);
+        newNeoPosix++;
+        newNeoPos +=  newNeoPosix + "," + Neopos[1];
+        arrayState[0] = newNeoPos;
+        return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
+    }
+
+    public static String right(Node node){
+        String state = node.getState();
+        String[] arrayState = state.split(";", 10);
+        String[] Neopos = node.extractNeoPos();
+        String newNeoPos = "";
+        int newNeoPosiY = Integer.parseInt(Neopos[1]);
+        newNeoPosiY++;
+        newNeoPos +=  Neopos[0] + "," + newNeoPosiY;
+        arrayState[0] = newNeoPos;
+        return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
+
+    }
+
+    public static String left(Node node){
+        String state = node.getState();
+        String[] arrayState = state.split(";", 10);
+        String[] Neopos = node.extractNeoPos();
+        String newNeoPos = "";
+        int newNeoPosiY = Integer.parseInt(Neopos[1]);
+        newNeoPosiY--;
+        newNeoPos +=  Neopos[0] + "," + newNeoPosiY;
+        arrayState[0] = newNeoPos;
+        return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
+
+    }
+
     public static String Carry(Node node) {
         String state = node.getState();
         String[] arrayState = state.split(";", 10);
