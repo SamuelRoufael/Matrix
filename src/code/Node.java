@@ -1,6 +1,6 @@
 package code;
 
-public class Node {
+public class Node implements Comparable<Node>{
 
 	private Node parentNode = null;
 	private String state = "";
@@ -124,5 +124,10 @@ public class Node {
 
 	public void setOperator(String operator) {
 		this.operator = operator;
+	}
+
+	@Override
+	public int compareTo(Node node) {
+		return Integer.compare(getPriority(), node.getPriority());
 	}
 }
