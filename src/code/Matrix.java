@@ -464,7 +464,7 @@ public class Matrix extends GeneralSearch {
         if(availableOperations.contains("Up")) {
             for (int i = 0; i < hostages.length - 2; i += 3) {
                 int hostageY = hostages[i + 1];
-                if (neo[0].equals(hostages[i]) && neo[1].equals(hostageY - 1) ) {
+                if (neoPosition[0].equals(hostages[i]) && neoPosition[1].equals(hostageY - 1) ) {
                     neoPosition[1] = hostages[i + 1];
                 }
             }
@@ -480,7 +480,7 @@ public class Matrix extends GeneralSearch {
         if(availableOperations.contains("Down")) {
             for (int i = 0; i < hostages.length - 2; i += 3) {
                 int hostageY = hostages[i + 1];
-                if (neo[0].equals(hostages[i]) && neo[1].equals(hostageY + 1)) {
+                if (neoPosition[0].equals(hostages[i]) && neoPosition[1].equals(hostageY + 1)) {
                     neoPosition[1] = hostages[i + 1];
                 }
             }
@@ -496,7 +496,7 @@ public class Matrix extends GeneralSearch {
         if(availableOperations.contains("Left")) {
             for (int i = 0; i < hostages.length - 2; i += 3) {
                 int hostageX = hostages[i];
-                if (neo[1].equals(hostages[i + 1]) && neo[0].equals(hostageX - 1)) {
+                if (neoPosition[1].equals(hostages[i + 1]) && neoPosition[0].equals(hostageX - 1)) {
                     neoPosition[0] = hostages[i];
                 }
             }
@@ -512,7 +512,7 @@ public class Matrix extends GeneralSearch {
         if(availableOperations.contains("Right")) {
             for (int i = 0; i < hostages.length - 2; i += 3) {
                 int hostageX = hostages[i];
-                if (neo[1].equals(hostages[i + 1]) && neo[0].equals(hostageX + 1)) {
+                if (neoPosition[1].equals(hostages[i + 1]) && neoPosition[0].equals(hostageX + 1)) {
                     neoPosition[0] = hostages[i];
                 }
             }
