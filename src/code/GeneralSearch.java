@@ -2,7 +2,7 @@ package code;
 
 public abstract class GeneralSearch {
 
-	private static int numberOfNodes;
+	protected static int numberOfNodes;
 
-	public abstract Node Search(Node node, String strategy);
+	public abstract Node Search(Node node, QueuingFunction strategy);
 }
