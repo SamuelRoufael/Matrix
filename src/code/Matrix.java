@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.HashMap;
 
 public class Matrix extends GeneralSearch {
 
     private static final String[] operators = {"Up", "Down", "Right", "Left", "Kill", "TakePill", "Carry", "Drop", "Fly"};
+    private static final HashMap<String, Boolean> repeatedStates = new HashMap<String, Boolean>();
     private static int deaths = 0;
     private static int kills = 0;
 
@@ -177,8 +179,10 @@ public class Matrix extends GeneralSearch {
 
             if (GameOver(currNode))
                 continue;
-            else if (GoalTest(currNode))
+            else if (GoalTest(currNode)){
+                repeatedStates.clear();
                 return currNode;
+            }
 
             ArrayList<String> availableOperations = AvailableOperators(currNode);
             for (String operator : availableOperations) {
@@ -234,14 +238,15 @@ public class Matrix extends GeneralSearch {
     }
 
     public static Node Expand(Node node, String operator) {
-        String newState = "";
-        Node newNode = null;
+        String newState;
+        Node newNode;
 
         switch (operator) {
             case "Up": {
                 newState = "";
-                if (newState == null)
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("Up");
@@ -250,8 +255,9 @@ public class Matrix extends GeneralSearch {
                 ;break;
             case "Down": {
                 newState = "";
-                if (newState == null)
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("Down");
@@ -260,8 +266,9 @@ public class Matrix extends GeneralSearch {
                 ;break;
             case "Left": {
                 newState = "";
-                if (newState == null)
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("Left");
@@ -270,28 +277,33 @@ public class Matrix extends GeneralSearch {
                 ;break;
             case "Right": {
                 newState = "";
-                if (newState == null)
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("Right");
                 newNode.setDepth(node.getDepth() + 1);
             }
                 ;break;
+
             case "Carry": {
                 newState = Carry(node);
-                if (newState == null)
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("Carry");
                 newNode.setDepth(node.getDepth() + 1);
             }
                 ;break;
+
             case "Drop": {
                 newState = Drop(node);
-                if (newState == null)
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("Drop");
@@ -300,8 +312,9 @@ public class Matrix extends GeneralSearch {
                 ;break;
             case "Kill": {
                 newState = Kill(node);
-                if (newState == null)
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + (kills * 5000));
                 newNode.setOperator("Kill");
@@ -310,30 +323,31 @@ public class Matrix extends GeneralSearch {
                 ;break;
             case "Fly": {
                 newState = Fly(node);
-                if (newState == null)
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("Fly");
                 newNode.setDepth(node.getDepth() + 1);
-            }
-                ;break;
-            case "TakePill": {
+            };break;
+            //Take Pill
+            default: {
                 newState = TakePill(node);
-                if (newState == null)
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("TakePill");
                 newNode.setDepth(node.getDepth() + 1);
-            }
-                ;break;
+            };break;
         }
-        if (newNode != null) {
-            numberOfNodes++;
-            if (!operator.equals("TakePill"))
-                newNode = UpdateDamage(newNode);
-        }
+
+        numberOfNodes++;
+        if (!operator.equals("TakePill"))
+            newNode = UpdateDamage(newNode);
+
         return newNode;
     }
 
