@@ -1,15 +1,11 @@
 package code;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.PriorityQueue;
-import java.util.Random;
+import java.util.*;
 
 public class Matrix extends GeneralSearch {
 
-    private static final String[] operators = {"Up", "Down", "Right", "Left", "Kill", "TakePill", "Carry", "Drop", "Fly"};
-    private static int deaths = 0;
-    private static int kills = 0;
+    private static final String[] operators = {"up", "down", "right", "left", "kill", "takePill", "carry", "drop", "fly"};
+    private static final HashMap<String, Boolean> repeatedStates = new HashMap<>();
 
     public static String genGrid() {
         Random rand = new Random();
@@ -132,10 +128,17 @@ public class Matrix extends GeneralSearch {
         return grid;
     }
 
-    public static void solve(String grid, String strategy, boolean visualize) {
+    public static Node createInitialNode(String grid) {
+        String[] gridArray = grid.split(";", 10);
+        gridArray[2] = gridArray[2] + ",0";
+        String state = String.join(";", gridArray) + ";;;0;0;0" ;
+        return new Node(null, state);
+    }
+
+    public static String solve(String grid, String strategy, boolean visualize) {
         Matrix matrix = new Matrix();
         Node initialNode = createInitialNode(grid);
-        Node goalNode = null;
+        Node goalNode;
 
         switch (strategy) {
             case "BF":
@@ -162,14 +165,82 @@ public class Matrix extends GeneralSearch {
             default:
                 goalNode = matrix.Search(initialNode, QueuingFunction.ENQUEUE_END);
         }
-
+        return GenerateOutput(goalNode);
     }
 
     @Override
     public Node Search(Node initialNode, QueuingFunction queuingFunction) {
+        if (queuingFunction == QueuingFunction.ENQUEUE_END || queuingFunction == QueuingFunction.ENQUEUE_FRONT || queuingFunction == QueuingFunction.ENQUEUE_END_IDS)
+            return QueueSearch(initialNode, queuingFunction);
+        else
+            return PriorityQueueSearch(initialNode, queuingFunction);
+    }
 
-        PriorityQueue<Node> priorityQueue = new PriorityQueue<>(1000);
-        initialNode.setPriority(0);
+    private static Node QueueSearch(Node initialNode, QueuingFunction queuingFunction) {
+        LinkedList<Node> nodesQueue = new LinkedList<>();
+        nodesQueue.add(initialNode);
+
+        if (queuingFunction == QueuingFunction.ENQUEUE_END_IDS) {
+
+            int currentMaxDepth = 0;
+
+            while (true) {
+                nodesQueue.addFirst(initialNode);
+
+                while (!nodesQueue.isEmpty()) {
+                    Node currNode = nodesQueue.poll();
+
+                    if (GoalTest(currNode)) {
+                        repeatedStates.clear();
+                        return currNode;
+                    }
+                    else if (GameOver(currNode) || currNode.getDepth() >= currentMaxDepth)
+                        continue;
+
+                    ArrayList<String> availableOperators = AvailableOperators(currNode);
+
+                    for (String operator : availableOperators) {
+                        Node node = Expand(currNode, operator);
+
+                        if (node == null)
+                            continue;
+
+                        nodesQueue.addFirst(node);
+                    }
+                }
+                currentMaxDepth += 10;
+                repeatedStates.clear();
+            }
+        }
+        else {
+            while (!nodesQueue.isEmpty()) {
+                Node currNode = nodesQueue.poll();
+
+                if (GameOver(currNode))
+                    continue;
+                else if (GoalTest(currNode)) {
+                    repeatedStates.clear();
+                    return currNode;
+                }
+                ArrayList<String> availableOperations = AvailableOperators(currNode);
+                for (String operation : availableOperations) {
+                    Node node = Expand(currNode, operation);
+
+                    if (node == null)
+                        continue;
+
+                    if (queuingFunction == QueuingFunction.ENQUEUE_END)
+                        nodesQueue.addLast(node);
+                    else
+                        nodesQueue.addFirst(node);
+                }
+            }
+            return null;
+        }
+    }
+
+    private static Node PriorityQueueSearch(Node initialNode, QueuingFunction queuingFunction) {
+        PriorityQueue<Node> priorityQueue = new PriorityQueue<>();
         priorityQueue.add(initialNode);
 
         while (!priorityQueue.isEmpty()) {
@@ -177,171 +248,136 @@ public class Matrix extends GeneralSearch {
 
             if (GameOver(currNode))
                 continue;
-            else if (GoalTest(currNode))
+            else if (GoalTest(currNode)) {
+                repeatedStates.clear();
                 return currNode;
+            }
 
             ArrayList<String> availableOperations = AvailableOperators(currNode);
-            for (String operator : availableOperations) {
-                Node node = Expand(currNode, operator);
+            for (String operation : availableOperations) {
+                Node node = Expand(currNode, operation);
 
                 if (node == null)
                     continue;
 
-                switch (queuingFunction) {
-                    // BFS
-                    case ENQUEUE_END: {
-                        node.setPriority(0);
-                        priorityQueue.add(node);
-                    };break;
-                    // DFS
-                    case ENQUEUE_FRONT: {
-                        node.setPriority(-numberOfNodes);
-                        priorityQueue.add(node);
-                    };break;
-
-                    case ENQUEUE_END_IDS: {
-
-                    };break;
-
-                    case ENQUEUE_ORDERED_UC: {
-                        node.setPriority(node.getPathCost());
-                        priorityQueue.add(node);
-                    };break;
-
-                    case ENQUEUE_ORDERED_G1: {
-                        node.setPriority(node.getHeuristicCost());
-                        priorityQueue.add(node);
-                    };break;
-
-                    case ENQUEUE_ORDERED_G2: {
-                        node.setPriority(node.getHeuristicCost());
-                        priorityQueue.add(node);
-                    };break;
-
-                    case ENQUEUE_ORDERED_A1: {
-                        node.setPriority(node.getPathCost() + node.getHeuristicCost());
-                        priorityQueue.add(node);
-                    };break;
-
-                    case ENQUEUE_ORDERED_A2: {
-                        node.setPriority(node.getPathCost() + node.getHeuristicCost());
-                        priorityQueue.add(node);
-                    };break;
-                }
+                priorityQueue.add(node);
             }
         }
         return null;
     }
 
     public static Node Expand(Node node, String operator) {
-        String newState = "";
-        Node newNode = null;
+        String newState;
+        Node newNode;
 
         switch (operator) {
-            case "Up": {
-                newState = "";
-                if (newState == null)
+            case "up": {
+                newState = Move(node, operator);
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
-                newNode.setOperator("Up");
+                newNode.setOperator("up");
                 newNode.setDepth(node.getDepth() + 1);
             }
-                ;break;
-            case "Down": {
-                newState = "";
-                if (newState == null)
+                break;
+            case "down": {
+                newState = Move(node, operator);
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
-                newNode.setOperator("Down");
+                newNode.setOperator("down");
                 newNode.setDepth(node.getDepth() + 1);
             }
-                ;break;
-            case "Left": {
-                newState = "";
-                if (newState == null)
+                break;
+            case "left": {
+                newState = Move(node, operator);
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
-                newNode.setOperator("Left");
+                newNode.setOperator("left");
                 newNode.setDepth(node.getDepth() + 1);
             }
-                ;break;
-            case "Right": {
-                newState = "";
-                if (newState == null)
+                break;
+            case "right": {
+                newState = Move(node, operator);
+                if (newState == null || repeatedStates.get(newState) != null)
                     return null;
+                repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
                 newNode.setPathCost(node.getPathCost() + 1);
-                newNode.setOperator("Right");
+                newNode.setOperator("right");
                 newNode.setDepth(node.getDepth() + 1);
             }
-                ;break;
-            case "Carry": {
-                newState = Carry(node);
-                if (newState == null)
-                    return null;
-                newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
-                newNode.setOperator("Carry");
-                newNode.setDepth(node.getDepth() + 1);
-            }
-                ;break;
-            case "Drop": {
-                newState = Drop(node);
-                if (newState == null)
-                    return null;
-                newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
-                newNode.setOperator("Drop");
-                newNode.setDepth(node.getDepth() + 1);
-            }
-                ;break;
-            case "Kill": {
-                newState = Kill(node);
-                if (newState == null)
-                    return null;
-                newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + (kills * 5000));
-                newNode.setOperator("Kill");
-                newNode.setDepth(node.getDepth() + 1);
-            }
-                ;break;
-            case "Fly": {
-                newState = Fly(node);
-                if (newState == null)
-                    return null;
-                newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
-                newNode.setOperator("Fly");
-                newNode.setDepth(node.getDepth() + 1);
-            }
-                ;break;
-            case "TakePill": {
-                newState = TakePill(node);
-                if (newState == null)
-                    return null;
-                newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
-                newNode.setOperator("TakePill");
-                newNode.setDepth(node.getDepth() + 1);
-            }
-                ;break;
-        }
-        if (newNode != null) {
-            numberOfNodes++;
-            if (!operator.equals("TakePill"))
-                newNode = UpdateDamage(newNode);
-        }
-        return newNode;
-    }
+                break;
 
-    public static Node createInitialNode(String grid) {
-        String[] gridArray = grid.split(";", 10);
-        gridArray[2] = gridArray[2] + ",0";
-        String state = String.join(";", gridArray) + ";";
-        return new Node(null, state);
+            case "carry": {
+                newState = Carry(node);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setPathCost(node.getPathCost() + 1);
+                newNode.setOperator("carry");
+                newNode.setDepth(node.getDepth() + 1);
+            }break;
+
+            case "drop": {
+                newState = Drop(node);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setPathCost(node.getPathCost() + 1);
+                newNode.setOperator("drop");
+                newNode.setDepth(node.getDepth() + 1);
+            }
+                break;
+            case "kill": {
+                newState = Kill(node);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setOperator("kill");
+                newNode.setDepth(node.getDepth() + 1);
+            }
+                break;
+            case "fly": {
+                newState = Fly(node);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setPathCost(node.getPathCost() + 1);
+                newNode.setOperator("fly");
+                newNode.setDepth(node.getDepth() + 1);
+            }break;
+            //Take Pill
+            default: {
+                newState = TakePill(node);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setPathCost(node.getPathCost() + 1);
+                newNode.setOperator("takePill");
+                newNode.setDepth(node.getDepth() + 1);
+            }break;
+        }
+
+        numberOfNodes++;
+        if (!operator.equals("takePill")) {
+            newNode.setState(UpdateDamage(newNode));
+        }
+
+
+        return newNode;
     }
 
     private static ArrayList<String> AvailableOperators(Node node) {
@@ -349,71 +385,78 @@ public class Matrix extends GeneralSearch {
         String[] hostages = node.extractHostages();
         String[] neo = node.extractNeoPos();
         String[] agents = node.extractAgentsPos();
+        String[] mutatedAgents = node.extractMutatedHostagesPos();
         String[] grid = node.extractGridSize();
         String maxCarry = node.extractMaxNoOfCarry();
         String[] carriedHostages = node.extractCarriedHostagesHP();
         String[] telephoneBooth = node.extractTelBoothPos();
 
         for (String operator : operators) {
-            if (operator.equals("Carry")) {
+            if (operator.equals("carry")) {
                 if (carriedHostages.length == Integer.parseInt(maxCarry))
-                    availableOperators.remove("Carry");
+                    availableOperators.remove("carry");
             }
 
-            if (operator.equals("Drop")) {
+            if (operator.equals("drop")) {
                 if (!(neo[0].equals(telephoneBooth[0]) && neo[1].equals(telephoneBooth[1])))
-                    availableOperators.remove("Drop");
+                    availableOperators.remove("drop");
             }
 
-            if (operator.equals("Up")) {
-                if (node.getOperator().equals("Down") || neo[0].equals("0")) {
-                    availableOperators.remove("Up");
+            if (operator.equals("up")) {
+                if (node.getOperator().equals("down") || neo[0].equals("0")) {
+                    availableOperators.remove("up");
                 }
             }
 
-            if (operator.equals("Down")) {
-                if (node.getOperator().equals("Up") || Integer.parseInt(neo[0]) == Integer.parseInt(grid[0]) - 1)
-                    availableOperators.remove("Down");
+            if (operator.equals("down")) {
+                if (node.getOperator().equals("up") || Integer.parseInt(neo[0]) == Integer.parseInt(grid[0]) - 1)
+                    availableOperators.remove("down");
             }
 
-            if (operator.equals("Right")) {
-                if (node.getOperator().equals("Left") || Integer.parseInt(neo[1]) == Integer.parseInt(grid[1]) - 1)
-                    availableOperators.remove("Right");
+            if (operator.equals("right")) {
+                if (node.getOperator().equals("left") || Integer.parseInt(neo[1]) == Integer.parseInt(grid[1]) - 1)
+                    availableOperators.remove("right");
             }
 
-            if (operator.equals("Left")) {
-                if (node.getOperator().equals("Right") || neo[1].equals("0"))
-                    availableOperators.remove("Left");
+            if (operator.equals("left")) {
+                if (node.getOperator().equals("right") || neo[1].equals("0"))
+                    availableOperators.remove("left");
+            }
+
+            if (operator.equals("fly") && node.getOperator().equals("fly")) {
+                availableOperators.remove("fly");
             }
         }
         availableOperators.removeAll(AgentIllegalMoves(agents, neo));
         availableOperators.removeAll(HostageIllegalMoves(hostages, neo));
+        availableOperators.removeAll(MutatedHostagesIllegalMoves(mutatedAgents, neo));
         return availableOperators;
     }
 
     private static ArrayList<String> HostageIllegalMoves(String[] hostages, String[] neo) {
+
         ArrayList<String> toBeRemovedMoves = new ArrayList<>();
         for (int i = 0; i < hostages.length - 2; i += 3) {
-            if (Integer.parseInt(hostages[2]) >= 98) {
-                // Check if we need to remove the UP move.
-                if (hostages[i + 1].equals(neo[1]) && Integer.parseInt(hostages[i]) - 1 == Integer.parseInt(neo[0])) {
-                    toBeRemovedMoves.add("Up");
+            if (Integer.parseInt(hostages[i+2]) >= 98) {
+                // Check if we need to remove the up move.
+                if (hostages[i + 1].equals(neo[1]) && Integer.parseInt(hostages[i]) == Integer.parseInt(neo[0]) - 1) {
+                    toBeRemovedMoves.add("up");
                 }
-                // Check if we need to remove the Down move.
-                if (hostages[i + 1].equals(neo[1]) && Integer.parseInt(hostages[i]) + 1 == Integer.parseInt(neo[0])) {
-                    toBeRemovedMoves.add("Down");
+                // Check if we need to remove the down move.
+                if (hostages[i + 1].equals(neo[1]) && Integer.parseInt(hostages[i]) == Integer.parseInt(neo[0]) + 1) {
+                    toBeRemovedMoves.add("down");
                 }
-                // Check if we need to remove the Left move.
-                if (hostages[i].equals(neo[0]) && Integer.parseInt(hostages[i + 1]) - 1 == Integer.parseInt(neo[1])) {
-                    toBeRemovedMoves.add("Left");
+                // Check if we need to remove the left move.
+                if (hostages[i].equals(neo[0]) && Integer.parseInt(hostages[i + 1]) == Integer.parseInt(neo[1]) - 1) {
+                    toBeRemovedMoves.add("left");
                 }
-                // Check if we need to remove the Right move.
-                if (hostages[i].equals(neo[0]) && Integer.parseInt(hostages[i + 1]) + 1 == Integer.parseInt(neo[1])) {
-                    toBeRemovedMoves.add("Right");
+                // Check if we need to remove the right move.
+                if (hostages[i].equals(neo[0]) && Integer.parseInt(hostages[i + 1]) == Integer.parseInt(neo[1]) + 1) {
+                    toBeRemovedMoves.add("right");
                 }
                 // if neo is in a cell with a Hostage who will die on the next round and performs a kill operation.
                 if (neo[0].equals(hostages[i]) && neo[1].equals(hostages[i + 1]) && Integer.parseInt(hostages[i + 2]) >= 98) {
-                    toBeRemovedMoves.add("Kill");
+                    toBeRemovedMoves.add("kill");
                 }
             }
         }
@@ -423,105 +466,108 @@ public class Matrix extends GeneralSearch {
     private static ArrayList<String> AgentIllegalMoves(String[] agents, String[] neo) {
         ArrayList<String> toBeRemovedMoves = new ArrayList<>();
         for (int i = 0; i < agents.length - 1; i += 2) {
-            // Check if we need to remove the UP move.
-            if (agents[i + 1].equals(neo[1]) && Integer.parseInt(agents[i]) - 1 == Integer.parseInt(neo[0])) {
-                toBeRemovedMoves.add("Up");
+            // Check if we need to remove the up move.
+            if (agents[i + 1].equals(neo[1]) && Integer.parseInt(agents[i]) == Integer.parseInt(neo[0]) - 1) {
+                toBeRemovedMoves.add("up");
             }
-            // Check if we need to remove the Down move.
-            if (agents[i + 1].equals(neo[1]) && Integer.parseInt(agents[i]) + 1 == Integer.parseInt(neo[0])) {
-                toBeRemovedMoves.add("Down");
+            // Check if we need to remove the down move.
+            if (agents[i + 1].equals(neo[1]) && Integer.parseInt(agents[i]) == Integer.parseInt(neo[0]) + 1) {
+                toBeRemovedMoves.add("down");
             }
-            // Check if we need to remove the Left move.
-            if (agents[i].equals(neo[0]) && Integer.parseInt(agents[i + 1]) - 1 == Integer.parseInt(neo[1])) {
-                toBeRemovedMoves.add("Left");
+            // Check if we need to remove the left move.
+            if (agents[i].equals(neo[0]) && Integer.parseInt(agents[i + 1]) == Integer.parseInt(neo[1]) - 1) {
+                toBeRemovedMoves.add("left");
             }
-            // Check if we need to remove the Right move.
-            if (agents[i].equals(neo[0]) && Integer.parseInt(agents[i + 1]) + 1 == Integer.parseInt(neo[1])) {
-                toBeRemovedMoves.add("Right");
+            // Check if we need to remove the right move.
+            if (agents[i].equals(neo[0]) && Integer.parseInt(agents[i + 1]) == Integer.parseInt(neo[1]) + 1) {
+                toBeRemovedMoves.add("right");
             }
         }
         return toBeRemovedMoves;
     }
 
-    public static String up(Node node){
-        String state = node.getState();
-        String[] arrayState = state.split(";", 10);
-        String[] Neopos = node.extractNeoPos();
-        String newNeoPos = "";
-        int newNeoPosix = Integer.parseInt(Neopos[0]);
-        newNeoPosix--;
-        newNeoPos +=  newNeoPosix + "," + Neopos[1];
-        arrayState[0] = newNeoPos;
-        return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
-    }
-
-    public static String down(Node node){
-        String state = node.getState();
-        String[] arrayState = state.split(";", 10);
-        String[] Neopos = node.extractNeoPos();
-        String newNeoPos = "";
-        int newNeoPosix = Integer.parseInt(Neopos[0]);
-        newNeoPosix++;
-        newNeoPos +=  newNeoPosix + "," + Neopos[1];
-        arrayState[0] = newNeoPos;
-        return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
-    }
-
-    public static String right(Node node){
-        String state = node.getState();
-        String[] arrayState = state.split(";", 10);
-        String[] Neopos = node.extractNeoPos();
-        String newNeoPos = "";
-        int newNeoPosiY = Integer.parseInt(Neopos[1]);
-        newNeoPosiY++;
-        newNeoPos +=  Neopos[0] + "," + newNeoPosiY;
-        arrayState[0] = newNeoPos;
-        return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
-
-    }
-
-    public static String left(Node node){
-        String state = node.getState();
-        String[] arrayState = state.split(";", 10);
-        String[] Neopos = node.extractNeoPos();
-        String newNeoPos = "";
-        int newNeoPosiY = Integer.parseInt(Neopos[1]);
-        newNeoPosiY--;
-        newNeoPos +=  Neopos[0] + "," + newNeoPosiY;
-        arrayState[0] = newNeoPos;
-        return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
-
-    }
-
-    public static String Carry(Node node) {
-        String state = node.getState();
-        String[] arrayState = state.split(";", 10);
-        String[] hostages = node.extractHostages();
-        String[] neoPosition = node.extractNeoPos();
-        String newHostages = "";
-        for (int i = 0; i < hostages.length - 2; i += 3) {
-            String xHostage = hostages[i];
-            String yHostage = hostages[i + 1];
-            String hostageDamage = hostages[i + 2];
-
-            if (xHostage.equals(neoPosition[0]) && yHostage.equals(neoPosition[1])) {
-                if (!arrayState[8].isEmpty())
-                    arrayState[8] += ",";
-                arrayState[8] += hostageDamage;
-            } else {
-                newHostages += xHostage + "," + yHostage + "," + hostageDamage + ",";
+    private static ArrayList<String> MutatedHostagesIllegalMoves(String[] mutatedHostages, String[] neo) {
+        ArrayList<String> toBeRemovedMoves = new ArrayList<>();
+        for (int i = 0; i < mutatedHostages.length - 1; i += 2) {
+            // Check if we need to remove the up move.
+            if (mutatedHostages[i + 1].equals(neo[1]) && Integer.parseInt(mutatedHostages[i]) == Integer.parseInt(neo[0]) - 1) {
+                toBeRemovedMoves.add("up");
+            }
+            // Check if we need to remove the down move.
+            if (mutatedHostages[i + 1].equals(neo[1]) && Integer.parseInt(mutatedHostages[i]) == Integer.parseInt(neo[0]) + 1) {
+                toBeRemovedMoves.add("down");
+            }
+            // Check if we need to remove the left move.
+            if (mutatedHostages[i].equals(neo[0]) && Integer.parseInt(mutatedHostages[i + 1]) == Integer.parseInt(neo[1]) - 1) {
+                toBeRemovedMoves.add("left");
+            }
+            // Check if we need to remove the right move.
+            if (mutatedHostages[i].equals(neo[0]) && Integer.parseInt(mutatedHostages[i + 1]) == Integer.parseInt(neo[1]) + 1) {
+                toBeRemovedMoves.add("right");
             }
         }
-        newHostages = newHostages.substring(0, newHostages.length() - 1);
-        arrayState[7] = newHostages;
+        return toBeRemovedMoves;
+    }
 
-        return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
+    public static String Move(Node node, String direction){
+        String state = node.getState();
+        String[] arrayState = state.split(";", 4);
+        String[] neo = node.extractNeoPos();
+
+        switch (direction) {
+            case "up":
+                neo[0] = (Integer.parseInt(neo[0]) - 1) + "";
+                break;
+            case "down":
+                neo[0] = (Integer.parseInt(neo[0]) + 1) + "";
+                break;
+            case "right":
+                neo[1] = (Integer.parseInt(neo[1]) + 1) + "";
+                break;
+            default:
+                neo[1] = (Integer.parseInt(neo[1]) - 1) + "";
+                break;
+        }
+        arrayState[2] = String.join(",", neo);
+        String newState = String.join(";", arrayState);
+        return newState.equals(state) ? null : newState;
+    }
+
+    private static String Carry(Node node) {
+        String state = node.getState();
+        String [] stateArray = state.split(";", 13);
+        ArrayList<String> hostages = new ArrayList<>(Arrays.asList(node.extractHostages()));
+        ArrayList<String> carriedHostages = new ArrayList<>(Arrays.asList(node.extractCarriedHostagesHP()));
+        String[] neo = node.extractNeoPos();
+
+        for (int i = 0 ; i < hostages.size() - 2 ; i+=3) {
+            if (hostages.get(i).equals(neo[0]) && hostages.get(i+1).equals(neo[1])) {
+                hostages.remove(i);
+                hostages.remove(i);
+                carriedHostages.add(hostages.remove(i));
+                break;
+            }
+        }
+
+        stateArray[7] = String.join(",", hostages);
+        stateArray[8] = String.join(",", carriedHostages);
+        String newState = String.join(";", stateArray);
+
+        return (newState.equals(state) ? null : newState);
+
     }
 
     public static String Drop(Node node) {
         String state = node.getState();
-        String[] stateArray = state.split(";", 10);
+        String [] stateArray = state.split(";", 13);
+        String [] carriedHostages = node.extractCarriedHostagesHP();
+        short saved = 0;
+        for(String hostageDamage : carriedHostages) {
+            if (Integer.parseInt(hostageDamage) < 100)
+                saved++;
+        }
         stateArray[8] = "";
+        stateArray[10] = Integer.parseInt(stateArray[10]) + saved + "";
 
         return String.join(";", stateArray).equals(state) ? null : String.join(";", stateArray);
     }
@@ -538,20 +584,19 @@ public class Matrix extends GeneralSearch {
     }
 
     public static String Kill(Node node) {
-        String[] stateArray = node.getState().split(";", 10);
+        String state = node.getState();
+        String[] stateArray = state.split(";", 13);
         ArrayList<String> agents = new ArrayList<>(Arrays.asList(node.extractAgentsPos()));
         ArrayList<String> mutatedHostages = new ArrayList<>(Arrays.asList(node.extractMutatedHostagesPos()));
-        String[] hostages = node.extractHostages();
         String[] neo = node.extractNeoPos();
-        boolean killedSomeOne = false;
+        short countKills = 0;
 
         for (int i = 0; i < mutatedHostages.size() - 1; i += 2) {
             if (IsAdjacent(neo[0], neo[1], mutatedHostages.get(i), mutatedHostages.get(i + 1))) {
                 mutatedHostages.remove(i);
                 mutatedHostages.remove(i);
                 i -= 2;
-                kills += 1;
-                killedSomeOne = true;
+                countKills++;
             }
         }
 
@@ -560,31 +605,26 @@ public class Matrix extends GeneralSearch {
                 agents.remove(i);
                 agents.remove(i);
                 i -= 2;
-                kills += 1;
-                killedSomeOne = true;
+                countKills++;
             }
         }
 
-        // Update Neo's damage if neo killed someone.
-        if (killedSomeOne) {
-            int neoDamage = Integer.parseInt(neo[2]);
-            neoDamage = Math.min(100, neoDamage + 20);
-            neo[2] = neoDamage + "";
-            stateArray[2] = String.join(",", neo);
+        // return null of neo did not kill anyone.
+        if (countKills == 0) {
+            return null;
         }
 
-        String newAgentsString = String.join(",", agents);
-        String newMutatedHostagesString = String.join(",", mutatedHostages);
-        stateArray[4] = newAgentsString;
-        stateArray[9] = newMutatedHostagesString;
+        neo[2] = Math.min(100, Integer.parseInt(neo[2]) + 20) + "";
+        stateArray[2] = String.join(",", neo);
+        stateArray[4] = String.join(",", agents);
+        stateArray[9] = String.join(",", mutatedHostages);
+        stateArray[12] = (Integer.parseInt(stateArray[12]) + countKills) + "";
 
-        String newState = String.join(";", stateArray);
-
-        return (!newState.equals(node.getState()) ? newState : null);
+        return String.join(";", stateArray);
     }
 
-    private static Node UpdateDamage(Node node) {
-        String[] stateArray = node.getState().split(";", 10);
+    private static String UpdateDamage(Node node) {
+        String[] stateArray = node.getState().split(";", 13);
         ArrayList<String> hostages = new ArrayList<>(Arrays.asList(node.extractHostages()));
         ArrayList<String> carriedHostages = new ArrayList<>(Arrays.asList(node.extractCarriedHostagesHP()));
         ArrayList<String> mutatedHostages = new ArrayList<>(Arrays.asList(node.extractMutatedHostagesPos()));
@@ -598,9 +638,8 @@ public class Matrix extends GeneralSearch {
                 mutatedHostages.add(hostages.remove(i));
                 mutatedHostages.add(hostages.remove(i));
                 hostages.remove(i);
-                deaths++;
+                stateArray[11] = (Integer.parseInt(stateArray[11]) + 1) + "";
                 i -= 3;
-                node.setPathCost(node.getPathCost() + (deaths * 10000));
             }
         }
         stateArray[7] = String.join(",", hostages);
@@ -609,15 +648,14 @@ public class Matrix extends GeneralSearch {
         for (int i = 0; i < carriedHostages.size(); i++) {
             int damage = Integer.parseInt(carriedHostages.get(i));
             if (damage < 100 && damage + 2 >= 100) {
-                deaths++;
-                node.setPathCost(node.getPathCost() + (deaths * 10000));
+                stateArray[11] = (Integer.parseInt(stateArray[11]) + 1) + "";
             }
             damage = Math.min(100, damage + 2);
             carriedHostages.set(i, damage + "");
         }
         stateArray[8] = String.join(",", carriedHostages);
 
-        return new Node(node.getParentNode(), String.join(";", stateArray));
+        return String.join(";", stateArray);
     }
 
     public static String TakePill(Node node) {
@@ -625,7 +663,7 @@ public class Matrix extends GeneralSearch {
         String[] neoPosition = node.extractNeoPos();
         String[] hostages = node.extractHostages();
         String[] carriedHostages = node.extractCarriedHostagesHP();
-        String[] arrayState = state.split(";", 10);
+        String[] arrayState = state.split(";", 13);
         ArrayList<String> pills = new ArrayList<>(Arrays.asList(node.extractPillPos()));
 
         for (int i = 0; i < pills.size() - 1; i += 2) {
@@ -643,11 +681,13 @@ public class Matrix extends GeneralSearch {
                 pills.remove(i);
                 break;
             }
-            arrayState[2] = String.join(",", neoPosition);
-            arrayState[7] = String.join(",", hostages);
-            arrayState[8] = String.join(",", carriedHostages);
-            arrayState[5] = String.join(",", pills);
         }
+
+        arrayState[2] = String.join(",", neoPosition);
+        arrayState[7] = String.join(",", hostages);
+        arrayState[8] = String.join(",", carriedHostages);
+        arrayState[5] = String.join(",", pills);
+
         return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
     }
 
@@ -655,7 +695,7 @@ public class Matrix extends GeneralSearch {
         String state = node.getState();
         String[] neoPosition = node.extractNeoPos();
         String[] padsPosition = node.extractPadPos();
-        String[] arrayState = state.split(";", 10);
+        String[] arrayState = state.split(";", 13);
         for (int i = 0; i < padsPosition.length - 3; i += 4) {
             String padX1 = padsPosition[i];
             String padY1 = padsPosition[i + 1];
@@ -691,13 +731,51 @@ public class Matrix extends GeneralSearch {
         return Integer.parseInt(neo[2]) >= 100;
     }
 
+    private static String GenerateOutput(Node node) {
+
+        if (node == null) {
+            return "No Solution";
+        }
+
+        LinkedList<String> path = new LinkedList<>();
+        String [] outputArray = new String[4];
+        Node currentNode = node;
+
+        while (currentNode.getParentNode() != null) {
+            path.addFirst(currentNode.getOperator());
+            currentNode = currentNode.getParentNode();
+        }
+        outputArray[0] = String.join(",", path);
+        outputArray[1] = node.extractDeathsCount() +"";
+        outputArray[2] = (node.extractKilledCount() + node.extractDeathsCount()) + "";
+        outputArray[3] = numberOfNodes +"";
+
+        return String.join(";", outputArray);
+    }
+
     public static void main(String[] args) {
-        String grid = genGrid();
-        Node initialNode = createInitialNode(grid);
-//        String testString = "8,9;1;2,2,0;2,2;7,3,1,0,7,2,4,5,1,7,5,3,5,4,3,8,6,4,3,1;6,8,3,5,2,8,7,5;2,2,20,8,0,8,4,7,1,8,6,1,6,1,1,8,2,6,1,5,1,5,2,6,7,4,6,0,6,0,7,4,6,5,7,8,7,8,6,5,4,1,5,8,5,8,4,1;5,0,69,2,5,94,1,4,8,3,7,37,1,1,54;95;";
-//		System.out.println(Carry(node));
-//		System.out.println(Drop(node));
-//		System.out.println(initialNode.getState());
-//		System.out.println(Kill(initialNode));
+
+        String kill = "kill";
+        String up = "up";
+        String down = "down";
+        String carry = "carry";
+        String drop = "drop";
+        String takePill = "takePill";
+        String right = "right";
+        String left = "left";
+        String fly = "fly";
+
+        Node node = createInitialNode("5,5;2;0,4;1,4;0,1,1,1,2,1,3,1,3,3,3,4;1,0,2,4;0,3,4,3,4,3,0,3;0,0,30,3,0,80,4,4,80");
+        String[] operations = {left,fly,kill,fly,left,kill,left,kill,left,carry,right,right,right,fly,kill,fly,left,left,left,down,takePill,right,kill,left,down,right,right,right,right,takePill,left,left,left,left,kill,right,right,right,right,up,drop};
+        System.out.println(node.getState());
+        for (String op : operations) {
+            Node parentNode = node;
+            node = Expand(parentNode,op);
+            System.out.println(op);
+            System.out.println(node.getState());
+        }
+        System.out.println(GoalTest(node));
+
+//        System.out.println(AvailableOperators(new Node(null, "5,5;4;2,4,60;4,1;3,2,4,2;4,0,4,4;2,0,0,2,0,2,2,0;3,3,97,2,3,98;100;4,3;0;2;6")));
     }
 }
