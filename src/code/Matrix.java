@@ -860,7 +860,7 @@ public class Matrix extends GeneralSearch {
         return cost;
     }
 
-    private static void print(String[] array){
+    private static void print1DArray(String[] array){
         for(int i=0;i<array.length;i++){
             if(array.length > 1)
                 System.out.println(array[i] + ", ");
@@ -869,6 +869,16 @@ public class Matrix extends GeneralSearch {
         }
         System.out.println();
     }
+
+    public static void print2DArray(String[][] array){
+        for(int i = 0;i< array.length;i++){
+            for(int j=0; j<array[i].length;j++){
+                System.out.print(array[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+
     private static void printGrid(String grid){
 
         String[] state = createInitialNode(grid).getState().split(";", 17);
@@ -939,7 +949,7 @@ public class Matrix extends GeneralSearch {
                 output[mutatedX][mutatedY] = "M               |";
             }
         }
-        printArray(output);
+        print2DArray(output);
     }
 
     public static void visualize(String grid, String[] path){
@@ -951,110 +961,99 @@ public class Matrix extends GeneralSearch {
         String newState = createInitialNode(grid).getState();
 
         for(int i=0;i< path.length;i++){
-            newState = UpdateDamage(new Node(null, newState));
-            System.out.println(newState);
             switch (path[i]) {
                 case "up": {
                     System.out.println("Operator: Up");
-                    newState = Move(new Node(null, newState), "up");
+                    newState = Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
-                    print(carriedHostages);
+                    print1DArray(carriedHostages);
                     System.out.println();
                     printGrid(newState);
                 };break;
 
                 case "down": {
                     System.out.println("Operator: Down");
-                    newState = Move(new Node(null, newState), "down");
+                    newState = Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
-                    print(carriedHostages);
+                    print1DArray(carriedHostages);
                     System.out.println();
                     printGrid(newState);
                 };break;
 
                 case "right": {
                     System.out.println("Operator: Right");
-                    newState = Move(new Node(null, newState), "right");
+                    newState = Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
-                    print(carriedHostages);
+                    print1DArray(carriedHostages);
                     System.out.println();
                     printGrid(newState);
                 };break;
 
                 case "left": {
                     System.out.println("Operator: Left");
-                    newState = Move(new Node(null, newState), "left");
+                    newState = Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
-                    print(carriedHostages);
+                    print1DArray(carriedHostages);
                     System.out.println();
                     printGrid(newState);
                 };break;
 
                 case "fly": {
                     System.out.println("Operator: Fly");
-                    newState = Fly(new Node(null, newState));
+                    newState = Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
-                    print(carriedHostages);
+                    print1DArray(carriedHostages);
                     System.out.println();
                     printGrid(newState);
                 };break;
 
                 case "carry":{
                     System.out.println("Operator: Carry");
-                    newState = Carry(new Node(null, newState));
+                    newState = Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
-                    print(carriedHostages);
+                    print1DArray(carriedHostages);
                     System.out.println();
                     printGrid(newState);
                 }break;
 
                 case "drop":{
                     System.out.println("Operator: Drop");
-                    newState = Drop(new Node(null, newState));
+                    newState = Expand(new Node(null, newState), path[i]).getState();
                     System.out.print("Carried Hostages' Damage: ");
-                    print(carriedHostages);
+                    print1DArray(carriedHostages);
                     System.out.println();
                     printGrid(newState);
                 }break;
 
                 case "kill":{
                     System.out.println("Operator: Kill");
-                    newState = Kill(new Node(null, newState));
+                    newState = Expand(new Node(null, newState), path[i]).getState();
                     System.out.print("Carried Hostages' Damage: ");
-                    print(carriedHostages);
+                    print1DArray(carriedHostages);
                     System.out.println();
                     printGrid(newState);
                 }break;
 
                 case "takePill":{
                     System.out.println("Operator: Take pill");
-                    newState = TakePill(new Node(null, newState));
+                    newState = Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
-                    print(carriedHostages);
+                    print1DArray(carriedHostages);
                     System.out.println();
                     printGrid(newState);
                 }break;
             }
             System.out.println("------------------------------------------------------------------------");
+        }
+    }
 
-            carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
-        }
-    }
-    public static void printArray(String[][] array){
-        for(int i = 0;i< array.length;i++){
-            for(int j=0; j<array[i].length;j++){
-                System.out.print(array[i][j] + " ");
-            }
-            System.out.println();
-        }
-    }
     public static void main(String[] args) {
 
         String kill = "kill";
