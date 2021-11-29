@@ -949,12 +949,15 @@ public class Matrix extends GeneralSearch {
         String[] carriedHostages = new String[0];
 
         String newState = createInitialNode(grid).getState();
-        for(int i=0;i< path.length;i++){
 
+        for(int i=0;i< path.length;i++){
+            newState = UpdateDamage(new Node(null, newState));
+            System.out.println(newState);
             switch (path[i]) {
                 case "up": {
                     System.out.println("Operator: Up");
                     newState = Move(new Node(null, newState), "up");
+                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print(carriedHostages);
                     System.out.println();
@@ -964,6 +967,7 @@ public class Matrix extends GeneralSearch {
                 case "down": {
                     System.out.println("Operator: Down");
                     newState = Move(new Node(null, newState), "down");
+                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print(carriedHostages);
                     System.out.println();
@@ -973,6 +977,7 @@ public class Matrix extends GeneralSearch {
                 case "right": {
                     System.out.println("Operator: Right");
                     newState = Move(new Node(null, newState), "right");
+                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print(carriedHostages);
                     System.out.println();
@@ -982,6 +987,7 @@ public class Matrix extends GeneralSearch {
                 case "left": {
                     System.out.println("Operator: Left");
                     newState = Move(new Node(null, newState), "left");
+                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print(carriedHostages);
                     System.out.println();
@@ -991,6 +997,7 @@ public class Matrix extends GeneralSearch {
                 case "fly": {
                     System.out.println("Operator: Fly");
                     newState = Fly(new Node(null, newState));
+                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print(carriedHostages);
                     System.out.println();
@@ -1036,7 +1043,7 @@ public class Matrix extends GeneralSearch {
                 }break;
             }
             System.out.println("------------------------------------------------------------------------");
-            newState = UpdateDamage(new Node(null, newState));
+
             carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
         }
     }
@@ -1060,15 +1067,16 @@ public class Matrix extends GeneralSearch {
         String left = "left";
         String fly = "fly";
 
-        Node node = createInitialNode("5,5;1;0,4;4,4;0,3,1,4,2,1,3,0,4,1;4,0;2,4,3,4,3,4,2,4;0,2,98,1,2,98,2,2,98,3,2,98,4,2,98,2,0,1");
-        String[] operations = {kill, down, left, kill, left, left, up, left, down, down, carry, up, right, right, right, right, down, down, down, left, kill, left, kill, left, left, takePill, right, right, right, right, up, up, fly, left, up, up, left, kill, left, left, up, right, right, right, right, down, left, down, left, down, left, down, right, right, right, drop};
-        System.out.println(node.getState());
-        for (String op : operations) {
-            Node parentNode = node;
-            node = Expand(parentNode, op);
-            System.out.println(op);
-            System.out.println(node.getState());
-        }
-        System.out.println(GoalTest(node));
+        Node node = createInitialNode("5,5;2;0,4;1,4;0,1,1,1,2,1,3,1,3,3,3,4;1,0,2,4;0,3,4,3,4,3,0,3;0,0,30,3,0,80,4,4,80");
+        String[] operations = {left,fly,right,carry,left,fly,down,right,drop,left,left,kill,left,left,up,carry,down,down,kill,up,right,right,right,right,drop};
+//        System.out.println(node.getState());
+//        for (String op : operations) {
+//            Node parentNode = node;
+//            node = Expand(parentNode, op);
+//            System.out.println(op);
+//            System.out.println(node.getState());
+//        }
+//        System.out.println(GoalTest(node));
+        visualize("5,5;2;0,4;1,4;0,1,1,1,2,1,3,1,3,3,3,4;1,0,2,4;0,3,4,3,4,3,0,3;0,0,30,3,0,80,4,4,80", operations);
     }
 }
