@@ -1,6 +1,5 @@
 package code;
 
-import java.io.File;
 import java.util.*;
 
 public class Matrix extends GeneralSearch {
@@ -295,7 +294,7 @@ public class Matrix extends GeneralSearch {
                 newNode.setDepth(node.getDepth() + 1);
                 newNode.setStepsCost(stepCost + 50);
             }
-            break;
+                break;
             case "down": {
                 newState = Move(node, operator);
                 if (newState == null || repeatedStates.get(newState) != null)
@@ -306,7 +305,7 @@ public class Matrix extends GeneralSearch {
                 newNode.setDepth(node.getDepth() + 1);
                 newNode.setStepsCost(stepCost + 50);
             }
-            break;
+                break;
             case "left": {
                 newState = Move(node, operator);
                 if (newState == null || repeatedStates.get(newState) != null)
@@ -317,7 +316,7 @@ public class Matrix extends GeneralSearch {
                 newNode.setDepth(node.getDepth() + 1);
                 newNode.setStepsCost(stepCost + 50);
             }
-            break;
+                break;
             case "right": {
                 newState = Move(node, operator);
                 if (newState == null || repeatedStates.get(newState) != null)
@@ -328,7 +327,7 @@ public class Matrix extends GeneralSearch {
                 newNode.setDepth(node.getDepth() + 1);
                 newNode.setStepsCost(stepCost + 50);
             }
-            break;
+                break;
 
             case "carry": {
                 newState = Carry(node);
@@ -352,7 +351,7 @@ public class Matrix extends GeneralSearch {
                 newNode.setDepth(node.getDepth() + 1);
                 newNode.setStepsCost(stepCost);
             }
-            break;
+                break;
             case "kill": {
                 newState = Kill(node);
                 if (newState == null || repeatedStates.get(newState) != null)
@@ -370,7 +369,7 @@ public class Matrix extends GeneralSearch {
                 else
                     newNode.setStepsCost(stepCost + 200000000);
             }
-            break;
+                break;
             case "fly": {
                 newState = Fly(node);
                 if (newState == null || repeatedStates.get(newState) != null)
