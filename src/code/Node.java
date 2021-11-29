@@ -5,10 +5,9 @@ public class Node implements Comparable<Node> {
     private Node parentNode = null;
     private String state = "";
     private String operator = "";
-    private int pathCost = 0;
     private int depth = 0;
+    private int stepsCost = 0;
     private int heuristicCost = 0;
-    private int priority = 0;
 
     public Node(Node parentNode, String state) {
         this.parentNode = parentNode;
@@ -93,62 +92,11 @@ public class Node implements Comparable<Node> {
         return Integer.parseInt(array[12]) - this.extractDeathsCount();
     }
 
-    public String getState() {
-        return state;
-    }
-
-    public String getOperator() {
-        return operator;
-    }
-
-    public int getPathCost() {
-        return pathCost;
-    }
-
-    public int getDepth() {
-        return depth;
-    }
-
-    public int getHeuristicCost() {
-        return heuristicCost;
-    }
-
-    public Node getParentNode() {
-        return parentNode;
-    }
-
-    public int getPriority() {
-        return priority;
-    }
-
-    public void setPathCost(int pathCost) {
-        this.pathCost = pathCost;
-    }
-
-    public void setDepth(int depth) {
-        this.depth = depth;
-    }
-
-    public void setHeuristicCost(int heuristicCost) {
-        this.heuristicCost = heuristicCost;
-    }
-
-    public void setPriority(int priority) {
-        this.priority = priority;
-    }
-
-    public void setOperator(String operator) {
-        this.operator = operator;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
     public int calculateDMG() {
         String[] hostages = this.extractHostages();
         String[] carriedHostages = this.extractCarriedHostagesHP();
         int totalDMG = 0;
+
         for (int i = 0; i < hostages.length - 2; i += 3) {
             totalDMG += Integer.parseInt(hostages[i + 2]);
         }
@@ -159,21 +107,75 @@ public class Node implements Comparable<Node> {
         return totalDMG;
     }
 
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+
+    public String getOperator() {
+        return operator;
+    }
+
+    public void setOperator(String operator) {
+        this.operator = operator;
+    }
+
+    public int getDepth() {
+        return depth;
+    }
+
+    public void setDepth(int depth) {
+        this.depth = depth;
+    }
+
+    public Node getParentNode() {
+        return parentNode;
+    }
+
+    public int getStepsCost() {
+        return stepsCost;
+    }
+
+    public void setStepsCost(int stepsCost) {
+        this.stepsCost = stepsCost;
+    }
+
+    public int getHeuristicCost() {
+        return heuristicCost;
+    }
+
+    public void setHeuristicCost(int heuristicCost) {
+        this.heuristicCost = heuristicCost;
+    }
+
     @Override
     public int compareTo(Node node) {
+        String strategy = Matrix.getGlobalQueuingFunction();
+        switch (strategy) {
+            case "GR1" :
+            case "GR2" :
+                return GreedyCompareTo(node);
+            default: return OptimalCompareTo(node);
+        }
+    }
+
+    private int OptimalCompareTo(Node node) {
         if (this.extractDeathsCount() < node.extractDeathsCount())
             return -1;
         else if (this.extractDeathsCount() > node.extractDeathsCount())
             return 1;
-//        else if (this.extractCarriedHostagesHP().length > node.extractCarriedHostagesHP().length)
-//            return -1;
-//        else if (this.extractCarriedHostagesHP().length < node.extractCarriedHostagesHP().length)
-//            return 1;
-        else if (this.extractKilledCount() < node.extractKilledCount())
-            return -1;
-        else if (this.extractKilledCount() > node.extractKilledCount())
-            return 1;
-        // TODO : Consider handling mutated hostages kills Either here or below Damage.
-        else return Integer.compare(this.calculateDMG(), node.calculateDMG());
+        else return Integer.compare(this.getStepsCost() + this.getHeuristicCost(), node.getStepsCost() + node.getHeuristicCost());
     }
+
+    private int GreedyCompareTo(Node node) {
+        if (this.extractDeathsCount() < node.extractDeathsCount())
+            return -1;
+        else if (this.extractDeathsCount() > node.extractDeathsCount())
+            return 1;
+        return Integer.compare(this.getHeuristicCost(), node.getHeuristicCost());
+    }
+
 }
