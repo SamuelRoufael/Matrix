@@ -785,17 +785,36 @@ public class Matrix extends GeneralSearch {
         String[] neo = node.extractNeoPos();
         String[] hostages = node.extractHostages();
         String[] telephoneBooth = node.extractTelBoothPos();
-        int bestSoFar = Integer.MAX_VALUE;
+        String[] pads = node.extractPadPos();
+        boolean usedPads = false;
+        int bestSoFar = Short.MAX_VALUE;
 
-        // TODO : Handle Pads when calculating Distance.
         for (int i = 0; i < hostages.length - 2; i += 3) {
-            int xDistance = Math.abs(Integer.parseInt(neo[0]) - Integer.parseInt(hostages[i]));
-            int yDistance = Math.abs(Integer.parseInt(neo[1]) - Integer.parseInt(hostages[i + 1]));
-            int damageDifference = 100 - (Integer.parseInt(hostages[i + 2]) + (2 * (xDistance + yDistance)));
+            short xDistanceNeoToHostage = (short) Math.abs(Integer.parseInt(neo[0]) - Integer.parseInt(hostages[i]));
+            short yDistanceNeoToHostage = (short) Math.abs(Integer.parseInt(neo[1]) - Integer.parseInt(hostages[i + 1]));
+            short totalDistance = (short) (xDistanceNeoToHostage + yDistanceNeoToHostage);
+
+            for (int j = 0 ; j < pads.length - 3 ; j += 4) {
+                short xDistanceNeoToPad = (short) Math.abs(Integer.parseInt(neo[0]) - Integer.parseInt(pads[j]));
+                short yDistanceNeoToPad = (short) Math.abs(Integer.parseInt(neo[1]) - Integer.parseInt(pads[j + 1]));
+                short xDistancePadToHostage = (short) Math.abs(Integer.parseInt(pads[j + 2]) - Integer.parseInt(hostages[i]));
+                short yDistancePadToHostage = (short) Math.abs(Integer.parseInt(pads[j + 3]) - Integer.parseInt(hostages[i + 1]));
+                totalDistance = (short) Math.min(totalDistance, xDistanceNeoToPad + yDistanceNeoToPad + xDistancePadToHostage + yDistancePadToHostage);
+            }
+
+            int damageDifference = 100 - (Integer.parseInt(hostages[i + 2]) + (2 * totalDistance));
+
+            if (totalDistance < xDistanceNeoToHostage + yDistanceNeoToHostage){
+                usedPads = true;
+                damageDifference-=2;
+            }
+
             if (damageDifference > 0 & damageDifference < bestSoFar) {
                 bestSoFar = damageDifference;
-                cost = 50 * (xDistance + yDistance) + 50 * (Math.abs(Integer.parseInt(telephoneBooth[0]) - Integer.parseInt(hostages[i])) +
-                        Math.abs(Integer.parseInt(telephoneBooth[1]) - Integer.parseInt(hostages[i + 1])));
+                cost = 50 * totalDistance + (50 * (Math.abs(Integer.parseInt(telephoneBooth[0]) - Integer.parseInt(hostages[i])) +
+                        Math.abs(Integer.parseInt(telephoneBooth[1]) - Integer.parseInt(hostages[i + 1]))));
+                if (usedPads)
+                    cost += 50;
             }
         }
         return cost;
@@ -806,18 +825,36 @@ public class Matrix extends GeneralSearch {
         String[] neo = node.extractNeoPos();
         String[] hostages = node.extractHostages();
         String[] telephoneBooth = node.extractTelBoothPos();
-        int bestSoFar = Integer.MAX_VALUE;
+        String[] pads = node.extractPadPos();
+        boolean usedPads = false;
+        short shortestDistance = Short.MAX_VALUE;
 
         for (int i = 0; i < hostages.length - 2; i += 3) {
-            int xDistance = Math.abs(Integer.parseInt(neo[0]) - Integer.parseInt(hostages[i]));
-            int yDistance = Math.abs(Integer.parseInt(neo[1]) - Integer.parseInt(hostages[i + 1]));
-            int damageDifference = 100 - (Integer.parseInt(hostages[i + 2]) + (2 * (xDistance + yDistance)));
+            short xDistanceNeoToHostage = (short) Math.abs(Integer.parseInt(neo[0]) - Integer.parseInt(hostages[i]));
+            short yDistanceNeoToHostage = (short) Math.abs(Integer.parseInt(neo[1]) - Integer.parseInt(hostages[i + 1]));
+            short totalDistance = (short) (xDistanceNeoToHostage + yDistanceNeoToHostage);
 
-            if (damageDifference > 0 & damageDifference < bestSoFar) {
-                bestSoFar = damageDifference;
-                cost = 2 * (xDistance + yDistance);
-                cost += 2 * (Math.abs(Integer.parseInt(telephoneBooth[0]) - Integer.parseInt(hostages[i])) +
-                        Math.abs(Integer.parseInt(telephoneBooth[1]) - Integer.parseInt(hostages[i + 1])));
+            for (int j = 0 ; j < pads.length - 3 ; j += 4) {
+                short xDistanceNeoToPad = (short) Math.abs(Integer.parseInt(neo[0]) - Integer.parseInt(pads[j]));
+                short yDistanceNeoToPad = (short) Math.abs(Integer.parseInt(neo[1]) - Integer.parseInt(pads[j + 1]));
+                short xDistancePadToHostage = (short) Math.abs(Integer.parseInt(pads[j + 2]) - Integer.parseInt(hostages[i]));
+                short yDistancePadToHostage = (short) Math.abs(Integer.parseInt(pads[j + 3]) - Integer.parseInt(hostages[i + 1]));
+                totalDistance = (short) Math.min(totalDistance, xDistanceNeoToPad + yDistanceNeoToPad + xDistancePadToHostage + yDistancePadToHostage);
+            }
+
+            int damageDifference = 100 - (Integer.parseInt(hostages[i + 2]) + (2 * totalDistance));
+
+            if (totalDistance < xDistanceNeoToHostage + yDistanceNeoToHostage){
+                usedPads = true;
+                damageDifference-=2;
+            }
+
+            if (damageDifference > 0 & totalDistance < shortestDistance) {
+                shortestDistance = totalDistance;
+                cost = 50 * shortestDistance + (50 * (Math.abs(Integer.parseInt(telephoneBooth[0]) - Integer.parseInt(hostages[i])) +
+                        Math.abs(Integer.parseInt(telephoneBooth[1]) - Integer.parseInt(hostages[i + 1]))));
+                if (usedPads)
+                    cost += 50;
             }
         }
         return cost;
