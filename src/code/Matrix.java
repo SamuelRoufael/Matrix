@@ -1,12 +1,12 @@
 package code;
 
-import java.io.File;
 import java.util.*;
 
 public class Matrix extends GeneralSearch {
 
     private static final String[] operators = {"up", "down", "right", "left", "kill", "takePill", "carry", "drop", "fly"};
     private static final HashMap<String, Boolean> repeatedStates = new HashMap<>();
+    private static String globalQueuingFunction = "";
 
     public static String genGrid() {
         Random rand = new Random();
@@ -132,13 +132,15 @@ public class Matrix extends GeneralSearch {
     public static Node createInitialNode(String grid) {
         String[] gridArray = grid.split(";", 10);
         gridArray[2] = gridArray[2] + ",0";
-        String state = String.join(";", gridArray) + ";;;0;0;0" ;
+        String state = String.join(";", gridArray) + ";;;0;0;0";
         return new Node(null, state);
     }
 
     public static String solve(String grid, String strategy, boolean visualize) {
         Matrix matrix = new Matrix();
         Node initialNode = createInitialNode(grid);
+        globalQueuingFunction = strategy;
+        numberOfNodes = 0;
         Node goalNode;
 
         switch (strategy) {
@@ -194,8 +196,7 @@ public class Matrix extends GeneralSearch {
                     if (GoalTest(currNode)) {
                         repeatedStates.clear();
                         return currNode;
-                    }
-                    else if (GameOver(currNode) || currNode.getDepth() >= currentMaxDepth)
+                    } else if (GameOver(currNode) || currNode.getDepth() >= currentMaxDepth)
                         continue;
 
                     ArrayList<String> availableOperators = AvailableOperators(currNode);
@@ -212,8 +213,7 @@ public class Matrix extends GeneralSearch {
                 currentMaxDepth += 10;
                 repeatedStates.clear();
             }
-        }
-        else {
+        } else {
             while (!nodesQueue.isEmpty()) {
                 Node currNode = nodesQueue.poll();
 
@@ -261,6 +261,17 @@ public class Matrix extends GeneralSearch {
                 if (node == null)
                     continue;
 
+                switch (queuingFunction) {
+                    case ENQUEUE_ORDERED_A1:
+                    case ENQUEUE_ORDERED_G1:
+                        node.setHeuristicCost(CalculateHeuristicOne(node));break;
+                    case ENQUEUE_ORDERED_A2:
+                    case ENQUEUE_ORDERED_G2:
+                        node.setHeuristicCost(CalculateHeuristicTwo(node));break;
+                    default:
+                        node.setHeuristicCost(0);
+                }
+
                 priorityQueue.add(node);
             }
         }
@@ -270,6 +281,7 @@ public class Matrix extends GeneralSearch {
     public static Node Expand(Node node, String operator) {
         String newState;
         Node newNode;
+        int stepCost = node.getStepsCost();
 
         switch (operator) {
             case "up": {
@@ -278,9 +290,9 @@ public class Matrix extends GeneralSearch {
                     return null;
                 repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("up");
                 newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost + 50);
             }
                 break;
             case "down": {
@@ -289,9 +301,9 @@ public class Matrix extends GeneralSearch {
                     return null;
                 repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("down");
                 newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost + 50);
             }
                 break;
             case "left": {
@@ -300,9 +312,9 @@ public class Matrix extends GeneralSearch {
                     return null;
                 repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("left");
                 newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost + 50);
             }
                 break;
             case "right": {
@@ -311,9 +323,9 @@ public class Matrix extends GeneralSearch {
                     return null;
                 repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("right");
                 newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost + 50);
             }
                 break;
 
@@ -323,10 +335,11 @@ public class Matrix extends GeneralSearch {
                     return null;
                 repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("carry");
                 newNode.setDepth(node.getDepth() + 1);
-            }break;
+                newNode.setStepsCost(stepCost);
+            }
+            break;
 
             case "drop": {
                 newState = Drop(node);
@@ -334,9 +347,9 @@ public class Matrix extends GeneralSearch {
                     return null;
                 repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("drop");
                 newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost);
             }
                 break;
             case "kill": {
@@ -347,6 +360,14 @@ public class Matrix extends GeneralSearch {
                 newNode = new Node(node, newState);
                 newNode.setOperator("kill");
                 newNode.setDepth(node.getDepth() + 1);
+
+                if (newNode.extractMutatedHostagesPos().length != node.extractMutatedHostagesPos().length &&
+                        newNode.extractAgentsPos().length != node.extractAgentsPos().length)
+                    newNode.setStepsCost(stepCost + 200000);
+                else if (newNode.extractMutatedHostagesPos().length != node.extractMutatedHostagesPos().length)
+                    newNode.setStepsCost(stepCost);
+                else
+                    newNode.setStepsCost(stepCost + 200000000);
             }
                 break;
             case "fly": {
@@ -355,10 +376,11 @@ public class Matrix extends GeneralSearch {
                     return null;
                 repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("fly");
                 newNode.setDepth(node.getDepth() + 1);
-            }break;
+                newNode.setStepsCost(stepCost + 50);
+            }
+            break;
             //Take Pill
             default: {
                 newState = TakePill(node);
@@ -366,17 +388,17 @@ public class Matrix extends GeneralSearch {
                     return null;
                 repeatedStates.put(newState, true);
                 newNode = new Node(node, newState);
-                newNode.setPathCost(node.getPathCost() + 1);
                 newNode.setOperator("takePill");
                 newNode.setDepth(node.getDepth() + 1);
-            }break;
+                newNode.setStepsCost(stepCost + 20);
+            }
+            break;
         }
 
         numberOfNodes++;
         if (!operator.equals("takePill")) {
             newNode.setState(UpdateDamage(newNode));
         }
-
 
         return newNode;
     }
@@ -438,7 +460,7 @@ public class Matrix extends GeneralSearch {
 
         ArrayList<String> toBeRemovedMoves = new ArrayList<>();
         for (int i = 0; i < hostages.length - 2; i += 3) {
-            if (Integer.parseInt(hostages[i+2]) >= 98) {
+            if (Integer.parseInt(hostages[i + 2]) >= 98) {
                 // Check if we need to remove the up move.
                 if (hostages[i + 1].equals(neo[1]) && Integer.parseInt(hostages[i]) == Integer.parseInt(neo[0]) - 1) {
                     toBeRemovedMoves.add("up");
@@ -510,7 +532,7 @@ public class Matrix extends GeneralSearch {
         return toBeRemovedMoves;
     }
 
-    public static String Move(Node node, String direction){
+    public static String Move(Node node, String direction) {
         String state = node.getState();
         String[] arrayState = state.split(";", 4);
         String[] neo = node.extractNeoPos();
@@ -536,13 +558,13 @@ public class Matrix extends GeneralSearch {
 
     private static String Carry(Node node) {
         String state = node.getState();
-        String [] stateArray = state.split(";", 13);
+        String[] stateArray = state.split(";", 13);
         ArrayList<String> hostages = new ArrayList<>(Arrays.asList(node.extractHostages()));
         ArrayList<String> carriedHostages = new ArrayList<>(Arrays.asList(node.extractCarriedHostagesHP()));
         String[] neo = node.extractNeoPos();
 
-        for (int i = 0 ; i < hostages.size() - 2 ; i+=3) {
-            if (hostages.get(i).equals(neo[0]) && hostages.get(i+1).equals(neo[1])) {
+        for (int i = 0; i < hostages.size() - 2; i += 3) {
+            if (hostages.get(i).equals(neo[0]) && hostages.get(i + 1).equals(neo[1])) {
                 hostages.remove(i);
                 hostages.remove(i);
                 carriedHostages.add(hostages.remove(i));
@@ -560,10 +582,10 @@ public class Matrix extends GeneralSearch {
 
     public static String Drop(Node node) {
         String state = node.getState();
-        String [] stateArray = state.split(";", 13);
-        String [] carriedHostages = node.extractCarriedHostagesHP();
+        String[] stateArray = state.split(";", 13);
+        String[] carriedHostages = node.extractCarriedHostagesHP();
         short saved = 0;
-        for(String hostageDamage : carriedHostages) {
+        for (String hostageDamage : carriedHostages) {
             if (Integer.parseInt(hostageDamage) < 100)
                 saved++;
         }
@@ -739,7 +761,7 @@ public class Matrix extends GeneralSearch {
         }
 
         LinkedList<String> path = new LinkedList<>();
-        String [] outputArray = new String[4];
+        String[] outputArray = new String[4];
         Node currentNode = node;
 
         while (currentNode.getParentNode() != null) {
@@ -747,11 +769,95 @@ public class Matrix extends GeneralSearch {
             currentNode = currentNode.getParentNode();
         }
         outputArray[0] = String.join(",", path);
-        outputArray[1] = node.extractDeathsCount() +"";
+        outputArray[1] = node.extractDeathsCount() + "";
         outputArray[2] = (node.extractKilledCount() + node.extractDeathsCount()) + "";
-        outputArray[3] = numberOfNodes +"";
+        outputArray[3] = numberOfNodes + "";
 
         return String.join(";", outputArray);
+    }
+
+    public static String getGlobalQueuingFunction() {
+        return globalQueuingFunction;
+    }
+
+    private static int CalculateHeuristicOne(Node node) {
+        int cost = 0;
+        String[] neo = node.extractNeoPos();
+        String[] hostages = node.extractHostages();
+        String[] telephoneBooth = node.extractTelBoothPos();
+        String[] pads = node.extractPadPos();
+        boolean usedPads = false;
+        int bestSoFar = Short.MAX_VALUE;
+
+        for (int i = 0; i < hostages.length - 2; i += 3) {
+            short xDistanceNeoToHostage = (short) Math.abs(Integer.parseInt(neo[0]) - Integer.parseInt(hostages[i]));
+            short yDistanceNeoToHostage = (short) Math.abs(Integer.parseInt(neo[1]) - Integer.parseInt(hostages[i + 1]));
+            short totalDistance = (short) (xDistanceNeoToHostage + yDistanceNeoToHostage);
+
+            for (int j = 0 ; j < pads.length - 3 ; j += 4) {
+                short xDistanceNeoToPad = (short) Math.abs(Integer.parseInt(neo[0]) - Integer.parseInt(pads[j]));
+                short yDistanceNeoToPad = (short) Math.abs(Integer.parseInt(neo[1]) - Integer.parseInt(pads[j + 1]));
+                short xDistancePadToHostage = (short) Math.abs(Integer.parseInt(pads[j + 2]) - Integer.parseInt(hostages[i]));
+                short yDistancePadToHostage = (short) Math.abs(Integer.parseInt(pads[j + 3]) - Integer.parseInt(hostages[i + 1]));
+                totalDistance = (short) Math.min(totalDistance, xDistanceNeoToPad + yDistanceNeoToPad + xDistancePadToHostage + yDistancePadToHostage);
+            }
+
+            int damageDifference = 100 - (Integer.parseInt(hostages[i + 2]) + (2 * totalDistance));
+
+            if (totalDistance < xDistanceNeoToHostage + yDistanceNeoToHostage){
+                usedPads = true;
+                damageDifference-=2;
+            }
+
+            if (damageDifference > 0 & damageDifference < bestSoFar) {
+                bestSoFar = damageDifference;
+                cost = 50 * totalDistance + (50 * (Math.abs(Integer.parseInt(telephoneBooth[0]) - Integer.parseInt(hostages[i])) +
+                        Math.abs(Integer.parseInt(telephoneBooth[1]) - Integer.parseInt(hostages[i + 1]))));
+                if (usedPads)
+                    cost += 50;
+            }
+        }
+        return cost;
+    }
+
+    private static int CalculateHeuristicTwo(Node node) {
+        int cost = 0;
+        String[] neo = node.extractNeoPos();
+        String[] hostages = node.extractHostages();
+        String[] telephoneBooth = node.extractTelBoothPos();
+        String[] pads = node.extractPadPos();
+        boolean usedPads = false;
+        short shortestDistance = Short.MAX_VALUE;
+
+        for (int i = 0; i < hostages.length - 2; i += 3) {
+            short xDistanceNeoToHostage = (short) Math.abs(Integer.parseInt(neo[0]) - Integer.parseInt(hostages[i]));
+            short yDistanceNeoToHostage = (short) Math.abs(Integer.parseInt(neo[1]) - Integer.parseInt(hostages[i + 1]));
+            short totalDistance = (short) (xDistanceNeoToHostage + yDistanceNeoToHostage);
+
+            for (int j = 0 ; j < pads.length - 3 ; j += 4) {
+                short xDistanceNeoToPad = (short) Math.abs(Integer.parseInt(neo[0]) - Integer.parseInt(pads[j]));
+                short yDistanceNeoToPad = (short) Math.abs(Integer.parseInt(neo[1]) - Integer.parseInt(pads[j + 1]));
+                short xDistancePadToHostage = (short) Math.abs(Integer.parseInt(pads[j + 2]) - Integer.parseInt(hostages[i]));
+                short yDistancePadToHostage = (short) Math.abs(Integer.parseInt(pads[j + 3]) - Integer.parseInt(hostages[i + 1]));
+                totalDistance = (short) Math.min(totalDistance, xDistanceNeoToPad + yDistanceNeoToPad + xDistancePadToHostage + yDistancePadToHostage);
+            }
+
+            int damageDifference = 100 - (Integer.parseInt(hostages[i + 2]) + (2 * totalDistance));
+
+            if (totalDistance < xDistanceNeoToHostage + yDistanceNeoToHostage){
+                usedPads = true;
+                damageDifference-=2;
+            }
+
+            if (damageDifference > 0 & totalDistance < shortestDistance) {
+                shortestDistance = totalDistance;
+                cost = 50 * shortestDistance + (50 * (Math.abs(Integer.parseInt(telephoneBooth[0]) - Integer.parseInt(hostages[i])) +
+                        Math.abs(Integer.parseInt(telephoneBooth[1]) - Integer.parseInt(hostages[i + 1]))));
+                if (usedPads)
+                    cost += 50;
+            }
+        }
+        return cost;
     }
 
     private static void print(String[] array){
@@ -954,17 +1060,15 @@ public class Matrix extends GeneralSearch {
         String left = "left";
         String fly = "fly";
 
-        Node node = createInitialNode("5,5;2;0,4;1,4;0,1,1,1,2,1,3,1,3,3,3,4;1,0,2,4;0,3,4,3,4,3,0,3;0,0,30,3,0,80,4,4,80");
-        String[] operations = {left,fly,kill,fly,left,kill,left,kill,left,carry,right,right,right,fly,kill,fly,left,left,left,down,takePill,right,kill,left,down,right,right,right,right,takePill,left,left,left,left,kill,right,right,right,right,up,drop};
-//        System.out.println(node.getState());
-//        for (String op : operations) {
-//            Node parentNode = node;
-//            node = Expand(parentNode,op);
-//            System.out.println(op);
-//            System.out.println(node.getState());
-//        }
-//        System.out.println(GoalTest(node));
-        visualize("5,5;2;0,4;1,4;0,1,1,1,2,1,3,1,3,3,3,4;1,0,2,4;0,3,4,3,4,3,0,3;0,0,30,3,0,80,4,4,80", operations);
-//        System.out.println(AvailableOperators(new Node(null, "5,5;4;2,4,60;4,1;3,2,4,2;4,0,4,4;2,0,0,2,0,2,2,0;3,3,97,2,3,98;100;4,3;0;2;6")));
+        Node node = createInitialNode("5,5;1;0,4;4,4;0,3,1,4,2,1,3,0,4,1;4,0;2,4,3,4,3,4,2,4;0,2,98,1,2,98,2,2,98,3,2,98,4,2,98,2,0,1");
+        String[] operations = {kill, down, left, kill, left, left, up, left, down, down, carry, up, right, right, right, right, down, down, down, left, kill, left, kill, left, left, takePill, right, right, right, right, up, up, fly, left, up, up, left, kill, left, left, up, right, right, right, right, down, left, down, left, down, left, down, right, right, right, drop};
+        System.out.println(node.getState());
+        for (String op : operations) {
+            Node parentNode = node;
+            node = Expand(parentNode, op);
+            System.out.println(op);
+            System.out.println(node.getState());
+        }
+        System.out.println(GoalTest(node));
     }
 }
