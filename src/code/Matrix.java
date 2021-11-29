@@ -1,5 +1,6 @@
 package code;
 
+import java.io.File;
 import java.util.*;
 
 public class Matrix extends GeneralSearch {
@@ -753,6 +754,194 @@ public class Matrix extends GeneralSearch {
         return String.join(";", outputArray);
     }
 
+    private static void print(String[] array){
+        for(int i=0;i<array.length;i++){
+            if(array.length > 1)
+                System.out.println(array[i] + ", ");
+            else
+                System.out.println(array[i]);
+        }
+        System.out.println();
+    }
+    private static void printGrid(String grid){
+
+        String[] state = createInitialNode(grid).getState().split(";", 17);
+        String[] gridSize = state[0].split(",",2);
+        String[][] output = new String[Integer.parseInt(gridSize[0])][Integer.parseInt(gridSize[1])];
+        for(int i=0;i< output.length;i++)
+            for(int j=0;j<output[i].length;j++)
+                if(output[i][j] == null)
+                    output[i][j]= "________________|";
+
+        String[] neo = state[2].split(",", 4);
+        output[Integer.parseInt(neo[0])][Integer.parseInt(neo[1])] = "Neo("+neo[2]+")         |";
+
+        String[] teleBooth = state[3].split(",",2);
+        if(teleBooth[0].equals(neo[0]) && teleBooth[1].equals(neo[1]))
+            output[Integer.parseInt(teleBooth[0])][Integer.parseInt(teleBooth[1])] = "TB,Neo("+neo[2]+")      |";
+        else
+            output[Integer.parseInt(teleBooth[0])][Integer.parseInt(teleBooth[1])] = "TB              |";
+
+        String[] agents = state[4].split(",",20);
+        for(int i=0;i< agents.length-1;i+=2){
+            int agentX = Integer.parseInt(agents[i]);
+            int agentY = Integer.parseInt(agents[i+1]);
+            output[agentX][agentY] = "A               |";
+        }
+
+        String[] pills = state[5].split(",", 10);
+        for(int i=0;i< pills.length-1;i+=2){
+            int pillX = Integer.parseInt(pills[i]);
+            int pillY = Integer.parseInt(pills[i+1]);
+            if(pillX == Integer.parseInt(neo[0]) && pillY == Integer.parseInt(neo[1]))
+                output[pillX][pillY] = "P,Neo("+neo[2]+")       |";
+            else
+                output[pillX][pillY] = "P               |";
+        }
+
+        String[] pads = state[6].split(",",20);
+        for(int i=0; i<pads.length-3; i+=4){
+            int padX1 = Integer.parseInt(pads[i]);
+            int padY1 = Integer.parseInt(pads[i+1]);
+            int padX2 = Integer.parseInt(pads[i+2]);
+            int padY2 = Integer.parseInt(pads[i+3]);
+            if(padX1 == Integer.parseInt(neo[0]) && padY1 == Integer.parseInt(neo[1]))
+                output[padX1][padY1] = "Pad(" + padX2 + "," + padY2 + "),Neo("+neo[2]+")|";
+            else
+                output[padX1][padY1] = "Pad(" + padX2 + "," + padY2 + ")        |";
+            if(padX2 == Integer.parseInt(neo[0]) && padY2 == Integer.parseInt(neo[1]))
+                output[padX2][padY2] = "Pad(" + padX1 + "," + padY1 + "),Neo("+neo[2]+")|";
+            else
+                output[padX2][padY2] = "Pad(" + padX1 + "," + padY1 + ")        |";
+        }
+
+        String[] hostages = state[7].split(",",20);
+        for(int i=0; i<hostages.length-2; i+=3){
+            int hostageX = Integer.parseInt(hostages[i]);
+            int hostageY = Integer.parseInt(hostages[i+1]);
+            int damage = Integer.parseInt(hostages[i+2]);
+            if(hostageX == Integer.parseInt(neo[0]) && hostageY == Integer.parseInt(neo[1]))
+                output[hostageX][hostageY] = "H(" + damage + "),Neo("+neo[2]+")   |";
+            else
+                output[hostageX][hostageY] = "H(" + damage + ")           |";
+        }
+        if(state.length > 9) {
+            String[] mutatedAgents = state[9].split(",", 10);
+            for(int i=0;i<mutatedAgents.length-1;i+=2){
+                int mutatedX = Integer.parseInt(mutatedAgents[i]);
+                int mutatedY = Integer.parseInt(mutatedAgents[i+1]);
+                output[mutatedX][mutatedY] = "M               |";
+            }
+        }
+        printArray(output);
+    }
+
+    public static void visualize(String grid, String[] path){
+        String[] state = grid.split(";", 15);
+        printGrid(grid);
+        System.out.println("------------------------------------------------------------------------");
+        String[] carriedHostages = new String[0];
+
+        String newState = createInitialNode(grid).getState();
+        for(int i=0;i< path.length;i++){
+
+            switch (path[i]) {
+                case "up": {
+                    System.out.println("Operator: Up");
+                    newState = Move(new Node(null, newState), "up");
+                    System.out.print("Carried Hostages' Damage: ");
+                    print(carriedHostages);
+                    System.out.println();
+                    printGrid(newState);
+                };break;
+
+                case "down": {
+                    System.out.println("Operator: Down");
+                    newState = Move(new Node(null, newState), "down");
+                    System.out.print("Carried Hostages' Damage: ");
+                    print(carriedHostages);
+                    System.out.println();
+                    printGrid(newState);
+                };break;
+
+                case "right": {
+                    System.out.println("Operator: Right");
+                    newState = Move(new Node(null, newState), "right");
+                    System.out.print("Carried Hostages' Damage: ");
+                    print(carriedHostages);
+                    System.out.println();
+                    printGrid(newState);
+                };break;
+
+                case "left": {
+                    System.out.println("Operator: Left");
+                    newState = Move(new Node(null, newState), "left");
+                    System.out.print("Carried Hostages' Damage: ");
+                    print(carriedHostages);
+                    System.out.println();
+                    printGrid(newState);
+                };break;
+
+                case "fly": {
+                    System.out.println("Operator: Fly");
+                    newState = Fly(new Node(null, newState));
+                    System.out.print("Carried Hostages' Damage: ");
+                    print(carriedHostages);
+                    System.out.println();
+                    printGrid(newState);
+                };break;
+
+                case "carry":{
+                    System.out.println("Operator: Carry");
+                    newState = Carry(new Node(null, newState));
+                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
+                    System.out.print("Carried Hostages' Damage: ");
+                    print(carriedHostages);
+                    System.out.println();
+                    printGrid(newState);
+                }break;
+
+                case "drop":{
+                    System.out.println("Operator: Drop");
+                    newState = Drop(new Node(null, newState));
+                    System.out.print("Carried Hostages' Damage: ");
+                    print(carriedHostages);
+                    System.out.println();
+                    printGrid(newState);
+                }break;
+
+                case "kill":{
+                    System.out.println("Operator: Kill");
+                    newState = Kill(new Node(null, newState));
+                    System.out.print("Carried Hostages' Damage: ");
+                    print(carriedHostages);
+                    System.out.println();
+                    printGrid(newState);
+                }break;
+
+                case "takePill":{
+                    System.out.println("Operator: Take pill");
+                    newState = TakePill(new Node(null, newState));
+                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
+                    System.out.print("Carried Hostages' Damage: ");
+                    print(carriedHostages);
+                    System.out.println();
+                    printGrid(newState);
+                }break;
+            }
+            System.out.println("------------------------------------------------------------------------");
+            newState = UpdateDamage(new Node(null, newState));
+            carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
+        }
+    }
+    public static void printArray(String[][] array){
+        for(int i = 0;i< array.length;i++){
+            for(int j=0; j<array[i].length;j++){
+                System.out.print(array[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
     public static void main(String[] args) {
 
         String kill = "kill";
@@ -767,15 +956,15 @@ public class Matrix extends GeneralSearch {
 
         Node node = createInitialNode("5,5;2;0,4;1,4;0,1,1,1,2,1,3,1,3,3,3,4;1,0,2,4;0,3,4,3,4,3,0,3;0,0,30,3,0,80,4,4,80");
         String[] operations = {left,fly,kill,fly,left,kill,left,kill,left,carry,right,right,right,fly,kill,fly,left,left,left,down,takePill,right,kill,left,down,right,right,right,right,takePill,left,left,left,left,kill,right,right,right,right,up,drop};
-        System.out.println(node.getState());
-        for (String op : operations) {
-            Node parentNode = node;
-            node = Expand(parentNode,op);
-            System.out.println(op);
-            System.out.println(node.getState());
-        }
-        System.out.println(GoalTest(node));
-
+//        System.out.println(node.getState());
+//        for (String op : operations) {
+//            Node parentNode = node;
+//            node = Expand(parentNode,op);
+//            System.out.println(op);
+//            System.out.println(node.getState());
+//        }
+//        System.out.println(GoalTest(node));
+        visualize("5,5;2;0,4;1,4;0,1,1,1,2,1,3,1,3,3,3,4;1,0,2,4;0,3,4,3,4,3,0,3;0,0,30,3,0,80,4,4,80", operations);
 //        System.out.println(AvailableOperators(new Node(null, "5,5;4;2,4,60;4,1;3,2,4,2;4,0,4,4;2,0,0,2,0,2,2,0;3,3,97,2,3,98;100;4,3;0;2;6")));
     }
 }
