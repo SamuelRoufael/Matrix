@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Matrix extends GeneralSearch {
 
-    private static final String[] operators = {"up", "down", "right", "left", "kill", "takePill", "carry", "drop", "fly"};
+    private static final String[] operators = {"carry", "drop", "takePill", "up", "down", "right", "left", "fly", "kill"};
     private static final HashMap<String, Boolean> repeatedStates = new HashMap<>();
     private static String globalQueuingFunction = "";
 
@@ -363,11 +363,11 @@ public class Matrix extends GeneralSearch {
 
                 if (newNode.extractMutatedHostagesPos().length != node.extractMutatedHostagesPos().length &&
                         newNode.extractAgentsPos().length != node.extractAgentsPos().length)
-                    newNode.setStepsCost(stepCost + 200000);
+                    newNode.setStepsCost(stepCost + 100000);
                 else if (newNode.extractMutatedHostagesPos().length != node.extractMutatedHostagesPos().length)
                     newNode.setStepsCost(stepCost);
                 else
-                    newNode.setStepsCost(stepCost + 200000000);
+                    newNode.setStepsCost(stepCost + 1000000);
             }
                 break;
             case "fly": {
