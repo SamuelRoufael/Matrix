@@ -4,9 +4,15 @@ import java.util.*;
 
 public class Matrix extends GeneralSearch {
 
-    private static final String[] operators = {"up", "down", "right", "left", "kill", "takePill", "carry", "drop", "fly"};
-    private static final HashMap<String, Boolean> repeatedStates = new HashMap<>();
+    private static final String[] operators = {"carry", "drop", "takePill", "up", "down", "right", "left", "fly", "kill"};
     private static String globalQueuingFunction = "";
+    private final String grid;
+    private final Node initialNode;
+
+    public Matrix(String grid) {
+        this.grid = grid;
+        this.initialNode = this.createInitialNode();
+    }
 
     public static String genGrid() {
         Random rand = new Random();
@@ -129,281 +135,65 @@ public class Matrix extends GeneralSearch {
         return grid;
     }
 
-    public static Node createInitialNode(String grid) {
-        String[] gridArray = grid.split(";", 10);
-        gridArray[2] = gridArray[2] + ",0";
-        String state = String.join(";", gridArray) + ";;;0;0;0";
-        return new Node(null, state);
-    }
-
     public static String solve(String grid, String strategy, boolean visualize) {
-        Matrix matrix = new Matrix();
-        Node initialNode = createInitialNode(grid);
+        Matrix matrix = new Matrix(grid);
         globalQueuingFunction = strategy;
         numberOfNodes = 0;
+        repeatedStates.clear();
         Node goalNode;
 
         switch (strategy) {
             case "BF":
-                goalNode = matrix.Search(initialNode, QueuingFunction.ENQUEUE_FRONT);
+                goalNode = Search(matrix, QueuingFunction.ENQUEUE_FRONT);
                 break;
             case "ID":
-                goalNode = matrix.Search(initialNode, QueuingFunction.ENQUEUE_END_IDS);
+                goalNode = Search(matrix, QueuingFunction.ENQUEUE_END_IDS);
                 break;
             case "UC":
-                goalNode = matrix.Search(initialNode, QueuingFunction.ENQUEUE_ORDERED_UC);
+                goalNode = Search(matrix, QueuingFunction.ENQUEUE_ORDERED_UC);
                 break;
             case "GR1":
-                goalNode = matrix.Search(initialNode, QueuingFunction.ENQUEUE_ORDERED_G1);
+                goalNode = Search(matrix, QueuingFunction.ENQUEUE_ORDERED_G1);
                 break;
             case "GR2":
-                goalNode = matrix.Search(initialNode, QueuingFunction.ENQUEUE_ORDERED_G2);
+                goalNode = Search(matrix, QueuingFunction.ENQUEUE_ORDERED_G2);
                 break;
             case "AS1":
-                goalNode = matrix.Search(initialNode, QueuingFunction.ENQUEUE_ORDERED_A1);
+                goalNode = Search(matrix, QueuingFunction.ENQUEUE_ORDERED_A1);
                 break;
             case "AS2":
-                goalNode = matrix.Search(initialNode, QueuingFunction.ENQUEUE_ORDERED_A2);
+                goalNode = Search(matrix, QueuingFunction.ENQUEUE_ORDERED_A2);
                 break;
             default:
-                goalNode = matrix.Search(initialNode, QueuingFunction.ENQUEUE_END);
+                goalNode = Search(matrix, QueuingFunction.ENQUEUE_END);
         }
         return GenerateOutput(goalNode);
     }
 
     @Override
-    public Node Search(Node initialNode, QueuingFunction queuingFunction) {
-        if (queuingFunction == QueuingFunction.ENQUEUE_END || queuingFunction == QueuingFunction.ENQUEUE_FRONT || queuingFunction == QueuingFunction.ENQUEUE_END_IDS)
-            return QueueSearch(initialNode, queuingFunction);
-        else
-            return PriorityQueueSearch(initialNode, queuingFunction);
+    public Node getInitialNode() {
+        return initialNode;
     }
 
-    private static Node QueueSearch(Node initialNode, QueuingFunction queuingFunction) {
-        LinkedList<Node> nodesQueue = new LinkedList<>();
-        nodesQueue.add(initialNode);
-
-        if (queuingFunction == QueuingFunction.ENQUEUE_END_IDS) {
-
-            int currentMaxDepth = 0;
-
-            while (true) {
-                nodesQueue.addFirst(initialNode);
-
-                while (!nodesQueue.isEmpty()) {
-                    Node currNode = nodesQueue.poll();
-
-                    if (GoalTest(currNode)) {
-                        repeatedStates.clear();
-                        return currNode;
-                    } else if (GameOver(currNode) || currNode.getDepth() >= currentMaxDepth)
-                        continue;
-
-                    ArrayList<String> availableOperators = AvailableOperators(currNode);
-
-                    for (String operator : availableOperators) {
-                        Node node = Expand(currNode, operator);
-
-                        if (node == null)
-                            continue;
-
-                        nodesQueue.addFirst(node);
-                    }
-                }
-                currentMaxDepth += 10;
-                repeatedStates.clear();
-            }
-        } else {
-            while (!nodesQueue.isEmpty()) {
-                Node currNode = nodesQueue.poll();
-
-                if (GameOver(currNode))
-                    continue;
-                else if (GoalTest(currNode)) {
-                    repeatedStates.clear();
-                    return currNode;
-                }
-                ArrayList<String> availableOperations = AvailableOperators(currNode);
-                for (String operation : availableOperations) {
-                    Node node = Expand(currNode, operation);
-
-                    if (node == null)
-                        continue;
-
-                    if (queuingFunction == QueuingFunction.ENQUEUE_END)
-                        nodesQueue.addLast(node);
-                    else
-                        nodesQueue.addFirst(node);
-                }
-            }
-            return null;
-        }
+    public static String getGlobalQueuingFunction() {
+        return globalQueuingFunction;
     }
 
-    private static Node PriorityQueueSearch(Node initialNode, QueuingFunction queuingFunction) {
-        PriorityQueue<Node> priorityQueue = new PriorityQueue<>();
-        priorityQueue.add(initialNode);
-
-        while (!priorityQueue.isEmpty()) {
-            Node currNode = priorityQueue.poll();
-
-            if (GameOver(currNode))
-                continue;
-            else if (GoalTest(currNode)) {
-                repeatedStates.clear();
-                return currNode;
-            }
-
-            ArrayList<String> availableOperations = AvailableOperators(currNode);
-            for (String operation : availableOperations) {
-                Node node = Expand(currNode, operation);
-
-                if (node == null)
-                    continue;
-
-                switch (queuingFunction) {
-                    case ENQUEUE_ORDERED_A1:
-                    case ENQUEUE_ORDERED_G1:
-                        node.setHeuristicCost(CalculateHeuristicOne(node));break;
-                    case ENQUEUE_ORDERED_A2:
-                    case ENQUEUE_ORDERED_G2:
-                        node.setHeuristicCost(CalculateHeuristicTwo(node));break;
-                    default:
-                        node.setHeuristicCost(0);
-                }
-
-                priorityQueue.add(node);
-            }
-        }
-        return null;
+    @Override
+    public String getGrid() {
+        return grid;
     }
 
-    public static Node Expand(Node node, String operator) {
-        String newState;
-        Node newNode;
-        int stepCost = node.getStepsCost();
-
-        switch (operator) {
-            case "up": {
-                newState = Move(node, operator);
-                if (newState == null || repeatedStates.get(newState) != null)
-                    return null;
-                repeatedStates.put(newState, true);
-                newNode = new Node(node, newState);
-                newNode.setOperator("up");
-                newNode.setDepth(node.getDepth() + 1);
-                newNode.setStepsCost(stepCost + 50);
-            }
-                break;
-            case "down": {
-                newState = Move(node, operator);
-                if (newState == null || repeatedStates.get(newState) != null)
-                    return null;
-                repeatedStates.put(newState, true);
-                newNode = new Node(node, newState);
-                newNode.setOperator("down");
-                newNode.setDepth(node.getDepth() + 1);
-                newNode.setStepsCost(stepCost + 50);
-            }
-                break;
-            case "left": {
-                newState = Move(node, operator);
-                if (newState == null || repeatedStates.get(newState) != null)
-                    return null;
-                repeatedStates.put(newState, true);
-                newNode = new Node(node, newState);
-                newNode.setOperator("left");
-                newNode.setDepth(node.getDepth() + 1);
-                newNode.setStepsCost(stepCost + 50);
-            }
-                break;
-            case "right": {
-                newState = Move(node, operator);
-                if (newState == null || repeatedStates.get(newState) != null)
-                    return null;
-                repeatedStates.put(newState, true);
-                newNode = new Node(node, newState);
-                newNode.setOperator("right");
-                newNode.setDepth(node.getDepth() + 1);
-                newNode.setStepsCost(stepCost + 50);
-            }
-                break;
-
-            case "carry": {
-                newState = Carry(node);
-                if (newState == null || repeatedStates.get(newState) != null)
-                    return null;
-                repeatedStates.put(newState, true);
-                newNode = new Node(node, newState);
-                newNode.setOperator("carry");
-                newNode.setDepth(node.getDepth() + 1);
-                newNode.setStepsCost(stepCost);
-            }
-            break;
-
-            case "drop": {
-                newState = Drop(node);
-                if (newState == null || repeatedStates.get(newState) != null)
-                    return null;
-                repeatedStates.put(newState, true);
-                newNode = new Node(node, newState);
-                newNode.setOperator("drop");
-                newNode.setDepth(node.getDepth() + 1);
-                newNode.setStepsCost(stepCost);
-            }
-                break;
-            case "kill": {
-                newState = Kill(node);
-                if (newState == null || repeatedStates.get(newState) != null)
-                    return null;
-                repeatedStates.put(newState, true);
-                newNode = new Node(node, newState);
-                newNode.setOperator("kill");
-                newNode.setDepth(node.getDepth() + 1);
-
-                if (newNode.extractMutatedHostagesPos().length != node.extractMutatedHostagesPos().length &&
-                        newNode.extractAgentsPos().length != node.extractAgentsPos().length)
-                    newNode.setStepsCost(stepCost + 200000);
-                else if (newNode.extractMutatedHostagesPos().length != node.extractMutatedHostagesPos().length)
-                    newNode.setStepsCost(stepCost);
-                else
-                    newNode.setStepsCost(stepCost + 200000000);
-            }
-                break;
-            case "fly": {
-                newState = Fly(node);
-                if (newState == null || repeatedStates.get(newState) != null)
-                    return null;
-                repeatedStates.put(newState, true);
-                newNode = new Node(node, newState);
-                newNode.setOperator("fly");
-                newNode.setDepth(node.getDepth() + 1);
-                newNode.setStepsCost(stepCost + 50);
-            }
-            break;
-            //Take Pill
-            default: {
-                newState = TakePill(node);
-                if (newState == null || repeatedStates.get(newState) != null)
-                    return null;
-                repeatedStates.put(newState, true);
-                newNode = new Node(node, newState);
-                newNode.setOperator("takePill");
-                newNode.setDepth(node.getDepth() + 1);
-                newNode.setStepsCost(stepCost + 20);
-            }
-            break;
-        }
-
-        numberOfNodes++;
-        if (!operator.equals("takePill")) {
-            newNode.setState(UpdateDamage(newNode));
-        }
-
-        return newNode;
+    @Override
+    public Node createInitialNode() {
+        String[] gridArray = this.grid.split(";", 10);
+        gridArray[2] = gridArray[2] + ",0";
+        String state = String.join(";", gridArray) + ";;;0;0;0";
+        return new Node(null, state);
     }
 
-    private static ArrayList<String> AvailableOperators(Node node) {
+    @Override
+    public ArrayList<String> AvailableOperators(Node node) {
         ArrayList<String> availableOperators = new ArrayList<>(Arrays.asList(operators));
         String[] hostages = node.extractHostages();
         String[] neo = node.extractNeoPos();
@@ -450,6 +240,7 @@ public class Matrix extends GeneralSearch {
                 availableOperators.remove("fly");
             }
         }
+
         availableOperators.removeAll(AgentIllegalMoves(agents, neo));
         availableOperators.removeAll(HostageIllegalMoves(hostages, neo));
         availableOperators.removeAll(MutatedHostagesIllegalMoves(mutatedAgents, neo));
@@ -532,7 +323,133 @@ public class Matrix extends GeneralSearch {
         return toBeRemovedMoves;
     }
 
-    public static String Move(Node node, String direction) {
+    @Override
+    public Node Expand(Node node, String operator) {
+        String newState;
+        Node newNode;
+        int stepCost = node.getStepsCost();
+
+        switch (operator) {
+            case "up": {
+                newState = Move(node, operator);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setOperator("up");
+                newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost + 50);
+            }
+            break;
+            case "down": {
+                newState = Move(node, operator);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setOperator("down");
+                newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost + 50);
+            }
+            break;
+            case "left": {
+                newState = Move(node, operator);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setOperator("left");
+                newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost + 50);
+            }
+            break;
+            case "right": {
+                newState = Move(node, operator);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setOperator("right");
+                newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost + 50);
+            }
+            break;
+
+            case "carry": {
+                newState = Carry(node);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setOperator("carry");
+                newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost);
+            }
+            break;
+
+            case "drop": {
+                newState = Drop(node);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setOperator("drop");
+                newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost);
+            }
+            break;
+            case "kill": {
+                newState = Kill(node);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setOperator("kill");
+                newNode.setDepth(node.getDepth() + 1);
+
+                if (newNode.extractMutatedHostagesPos().length != node.extractMutatedHostagesPos().length &&
+                        newNode.extractAgentsPos().length != node.extractAgentsPos().length)
+                    newNode.setStepsCost(stepCost + 100000);
+                else if (newNode.extractMutatedHostagesPos().length != node.extractMutatedHostagesPos().length)
+                    newNode.setStepsCost(stepCost);
+                else
+                    newNode.setStepsCost(stepCost + 1000000);
+            }
+            break;
+            case "fly": {
+                newState = Fly(node);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setOperator("fly");
+                newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost + 50);
+            }
+            break;
+            //Take Pill
+            default: {
+                newState = TakePill(node);
+                if (newState == null || repeatedStates.get(newState) != null)
+                    return null;
+                repeatedStates.put(newState, true);
+                newNode = new Node(node, newState);
+                newNode.setOperator("takePill");
+                newNode.setDepth(node.getDepth() + 1);
+                newNode.setStepsCost(stepCost + 20);
+            }
+            break;
+        }
+
+        numberOfNodes++;
+        if (!operator.equals("takePill")) {
+            newNode.setState(UpdateDamage(newNode));
+        }
+
+        return newNode;
+    }
+
+    private static String Move(Node node, String direction) {
         String state = node.getState();
         String[] arrayState = state.split(";", 4);
         String[] neo = node.extractNeoPos();
@@ -580,7 +497,7 @@ public class Matrix extends GeneralSearch {
 
     }
 
-    public static String Drop(Node node) {
+    private static String Drop(Node node) {
         String state = node.getState();
         String[] stateArray = state.split(";", 13);
         String[] carriedHostages = node.extractCarriedHostagesHP();
@@ -606,7 +523,7 @@ public class Matrix extends GeneralSearch {
         else return neoYInt == agentYInt && (neoXInt == agentXInt + 1 || neoXInt == agentXInt - 1);
     }
 
-    public static String Kill(Node node) {
+    private static String Kill(Node node) {
         String state = node.getState();
         String[] stateArray = state.split(";", 13);
         ArrayList<String> agents = new ArrayList<>(Arrays.asList(node.extractAgentsPos()));
@@ -681,7 +598,7 @@ public class Matrix extends GeneralSearch {
         return String.join(";", stateArray);
     }
 
-    public static String TakePill(Node node) {
+    private static String TakePill(Node node) {
         String state = node.getState();
         String[] neoPosition = node.extractNeoPos();
         String[] hostages = node.extractHostages();
@@ -714,7 +631,7 @@ public class Matrix extends GeneralSearch {
         return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
     }
 
-    public static String Fly(Node node) {
+    private static String Fly(Node node) {
         String state = node.getState();
         String[] neoPosition = node.extractNeoPos();
         String[] padsPosition = node.extractPadPos();
@@ -738,7 +655,8 @@ public class Matrix extends GeneralSearch {
         return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
     }
 
-    public static boolean GoalTest(Node node) {
+    @Override
+    public boolean GoalTest(Node node) {
         String[] neo = node.extractNeoPos();
         String[] hostages = node.extractHostages();
         String[] mutatedHostages = node.extractMutatedHostagesPos();
@@ -749,38 +667,14 @@ public class Matrix extends GeneralSearch {
                 && mutatedHostages.length == 0 && carriedHostages.length == 0;
     }
 
-    private static boolean GameOver(Node node) {
+    @Override
+    public boolean GameOver(Node node) {
         String[] neo = node.extractNeoPos();
         return Integer.parseInt(neo[2]) >= 100;
     }
 
-    private static String GenerateOutput(Node node) {
-
-        if (node == null) {
-            return "No Solution";
-        }
-
-        LinkedList<String> path = new LinkedList<>();
-        String[] outputArray = new String[4];
-        Node currentNode = node;
-
-        while (currentNode.getParentNode() != null) {
-            path.addFirst(currentNode.getOperator());
-            currentNode = currentNode.getParentNode();
-        }
-        outputArray[0] = String.join(",", path);
-        outputArray[1] = node.extractDeathsCount() + "";
-        outputArray[2] = (node.extractKilledCount() + node.extractDeathsCount()) + "";
-        outputArray[3] = numberOfNodes + "";
-
-        return String.join(";", outputArray);
-    }
-
-    public static String getGlobalQueuingFunction() {
-        return globalQueuingFunction;
-    }
-
-    private static int CalculateHeuristicOne(Node node) {
+    @Override
+    public int CalculateHeuristicOne(Node node) {
         int cost = 0;
         String[] neo = node.extractNeoPos();
         String[] hostages = node.extractHostages();
@@ -820,7 +714,8 @@ public class Matrix extends GeneralSearch {
         return cost;
     }
 
-    private static int CalculateHeuristicTwo(Node node) {
+    @Override
+    public int CalculateHeuristicTwo(Node node) {
         int cost = 0;
         String[] neo = node.extractNeoPos();
         String[] hostages = node.extractHostages();
@@ -861,27 +756,27 @@ public class Matrix extends GeneralSearch {
     }
 
     private static void print1DArray(String[] array){
-        for(int i=0;i<array.length;i++){
-            if(array.length > 1)
-                System.out.println(array[i] + ", ");
+        for (String s : array) {
+            if (array.length > 1)
+                System.out.println(s + ", ");
             else
-                System.out.println(array[i]);
+                System.out.println(s);
         }
         System.out.println();
     }
 
     public static void print2DArray(String[][] array){
-        for(int i = 0;i< array.length;i++){
-            for(int j=0; j<array[i].length;j++){
-                System.out.print(array[i][j] + " ");
+        for (String[] strings : array) {
+            for (String string : strings) {
+                System.out.print(string + " ");
             }
             System.out.println();
         }
     }
 
-    private static void printGrid(String grid){
+    private static void printGrid(GeneralSearch problem){
 
-        String[] state = createInitialNode(grid).getState().split(";", 17);
+        String[] state = problem.createInitialNode().getState().split(";", 17);
         String[] gridSize = state[0].split(",",2);
         String[][] output = new String[Integer.parseInt(gridSize[0])][Integer.parseInt(gridSize[1])];
         for(int i=0;i< output.length;i++)
@@ -952,102 +847,101 @@ public class Matrix extends GeneralSearch {
         print2DArray(output);
     }
 
-    public static void visualize(String grid, String[] path){
-        String[] state = grid.split(";", 15);
-        printGrid(grid);
+    public static void visualize(GeneralSearch problem, String[] path){
+        printGrid(problem);
         System.out.println("------------------------------------------------------------------------");
         String[] carriedHostages = new String[0];
 
-        String newState = createInitialNode(grid).getState();
+        String newState = problem.createInitialNode().getState();
 
         for(int i=0;i< path.length;i++){
             switch (path[i]) {
                 case "up": {
                     System.out.println("Operator: Up");
-                    newState = Expand(new Node(null, newState), path[i]).getState();
+                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print1DArray(carriedHostages);
                     System.out.println();
-                    printGrid(newState);
+                    printGrid(problem);
                 };break;
 
                 case "down": {
                     System.out.println("Operator: Down");
-                    newState = Expand(new Node(null, newState), path[i]).getState();
+                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print1DArray(carriedHostages);
                     System.out.println();
-                    printGrid(newState);
+                    printGrid(problem);
                 };break;
 
                 case "right": {
                     System.out.println("Operator: Right");
-                    newState = Expand(new Node(null, newState), path[i]).getState();
+                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print1DArray(carriedHostages);
                     System.out.println();
-                    printGrid(newState);
+                    printGrid(problem);
                 };break;
 
                 case "left": {
                     System.out.println("Operator: Left");
-                    newState = Expand(new Node(null, newState), path[i]).getState();
+                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print1DArray(carriedHostages);
                     System.out.println();
-                    printGrid(newState);
+                    printGrid(problem);
                 };break;
 
                 case "fly": {
                     System.out.println("Operator: Fly");
-                    newState = Expand(new Node(null, newState), path[i]).getState();
+                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print1DArray(carriedHostages);
                     System.out.println();
-                    printGrid(newState);
+                    printGrid(problem);
                 };break;
 
                 case "carry":{
                     System.out.println("Operator: Carry");
-                    newState = Expand(new Node(null, newState), path[i]).getState();
+                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print1DArray(carriedHostages);
                     System.out.println();
-                    printGrid(newState);
+                    printGrid(problem);
                 }break;
 
                 case "drop":{
                     System.out.println("Operator: Drop");
-                    newState = Expand(new Node(null, newState), path[i]).getState();
+                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
                     System.out.print("Carried Hostages' Damage: ");
                     print1DArray(carriedHostages);
                     System.out.println();
-                    printGrid(newState);
+                    printGrid(problem);
                 }break;
 
                 case "kill":{
                     System.out.println("Operator: Kill");
-                    newState = Expand(new Node(null, newState), path[i]).getState();
+                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
                     System.out.print("Carried Hostages' Damage: ");
                     print1DArray(carriedHostages);
                     System.out.println();
-                    printGrid(newState);
+                    printGrid(problem);
                 }break;
 
                 case "takePill":{
                     System.out.println("Operator: Take pill");
-                    newState = Expand(new Node(null, newState), path[i]).getState();
+                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
                     carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
                     System.out.print("Carried Hostages' Damage: ");
                     print1DArray(carriedHostages);
                     System.out.println();
-                    printGrid(newState);
+                    printGrid(problem);
                 }break;
             }
             System.out.println("------------------------------------------------------------------------");
@@ -1056,18 +950,18 @@ public class Matrix extends GeneralSearch {
 
     public static void main(String[] args) {
 
-        String kill = "kill";
-        String up = "up";
-        String down = "down";
-        String carry = "carry";
-        String drop = "drop";
-        String takePill = "takePill";
-        String right = "right";
-        String left = "left";
-        String fly = "fly";
-
-        Node node = createInitialNode("5,5;2;0,4;1,4;0,1,1,1,2,1,3,1,3,3,3,4;1,0,2,4;0,3,4,3,4,3,0,3;0,0,30,3,0,80,4,4,80");
-        String[] operations = {left,fly,right,carry,left,fly,down,right,drop,left,left,kill,left,left,up,carry,down,down,kill,up,right,right,right,right,drop};
+//        String kill = "kill";
+//        String up = "up";
+//        String down = "down";
+//        String carry = "carry";
+//        String drop = "drop";
+//        String takePill = "takePill";
+//        String right = "right";
+//        String left = "left";
+//        String fly = "fly";
+//
+//        Node node = createInitialNode("5,5;1;0,4;4,4;0,3,1,4,2,1,3,0,4,1;4,0;2,4,3,4,3,4,2,4;0,2,98,1,2,98,2,2,98,3,2,98,4,2,98,2,0,1");
+//        String[] operations = {kill, down, left, kill, left, left, up, left, down, down, carry, up, right, right, right, right, down, down, down, left, kill, left, kill, left, left, takePill, right, right, right, right, up, up, fly, left, up, up, left, kill, left, left, up, right, right, right, right, down, left, down, left, down, left, down, right, right, right, drop};
 //        System.out.println(node.getState());
 //        for (String op : operations) {
 //            Node parentNode = node;
@@ -1076,6 +970,6 @@ public class Matrix extends GeneralSearch {
 //            System.out.println(node.getState());
 //        }
 //        System.out.println(GoalTest(node));
-        visualize("5,5;2;0,4;1,4;0,1,1,1,2,1,3,1,3,3,3,4;1,0,2,4;0,3,4,3,4,3,0,3;0,0,30,3,0,80,4,4,80", operations);
+
     }
 }
