@@ -167,6 +167,9 @@ public class Matrix extends GeneralSearch {
             default:
                 goalNode = Search(matrix, QueuingFunction.ENQUEUE_END);
         }
+        if(visualize){
+            visualize(matrix,GenerateOutput(goalNode));
+        }
         return GenerateOutput(goalNode);
     }
 
@@ -247,6 +250,13 @@ public class Matrix extends GeneralSearch {
         return availableOperators;
     }
 
+    /**
+     * Checks for hostages around neo with damage of 98 or more
+     * @param hostages : Array of available hostages in the state
+     * @param neo : Neo's current position
+     * @return A list of the operators that neo is not allowed to do
+     */
+
     private static ArrayList<String> HostageIllegalMoves(String[] hostages, String[] neo) {
 
         ArrayList<String> toBeRemovedMoves = new ArrayList<>();
@@ -277,6 +287,13 @@ public class Matrix extends GeneralSearch {
         return toBeRemovedMoves;
     }
 
+    /**
+     * Checks for agents around neo
+     * @param agents : Array of available agents in the state
+     * @param neo : Neo's current position
+     * @return A list of the operators that neo is allowed to do
+     */
+
     private static ArrayList<String> AgentIllegalMoves(String[] agents, String[] neo) {
         ArrayList<String> toBeRemovedMoves = new ArrayList<>();
         for (int i = 0; i < agents.length - 1; i += 2) {
@@ -299,6 +316,13 @@ public class Matrix extends GeneralSearch {
         }
         return toBeRemovedMoves;
     }
+
+    /**
+     * Checks for mutated hostages around neo
+     * @param mutatedHostages : Array of available hostages in the state
+     * @param neo : Neo's current position
+     * @return A list of operators that neo is not allowed to do
+     */
 
     private static ArrayList<String> MutatedHostagesIllegalMoves(String[] mutatedHostages, String[] neo) {
         ArrayList<String> toBeRemovedMoves = new ArrayList<>();
@@ -449,6 +473,13 @@ public class Matrix extends GeneralSearch {
         return newNode;
     }
 
+    /**
+     * Takes a node and the direction and applies the direction upon the node
+     * @param node : A node object that we want to move up, down, right, left
+     * @param direction : Specify which direction we want to move
+     * @return A new state with Neo's new position
+     */
+
     private static String Move(Node node, String direction) {
         String state = node.getState();
         String[] arrayState = state.split(";", 4);
@@ -472,6 +503,12 @@ public class Matrix extends GeneralSearch {
         String newState = String.join(";", arrayState);
         return newState.equals(state) ? null : newState;
     }
+
+    /**
+     * Takes a node and applies the carry operation upon and returns a updated state
+     * @param node : A node object that we want to apply carry upon
+     * @return A new state with the carried hostages' damage
+     */
 
     private static String Carry(Node node) {
         String state = node.getState();
@@ -497,6 +534,12 @@ public class Matrix extends GeneralSearch {
 
     }
 
+    /**
+     * Takes a node and applies the drop operation upon and returns a updated state
+     * @param node : A node object that we want to apply drop upon
+     * @return A new state without the carried hostages' damage
+     */
+
     private static String Drop(Node node) {
         String state = node.getState();
         String[] stateArray = state.split(";", 13);
@@ -512,6 +555,16 @@ public class Matrix extends GeneralSearch {
         return String.join(";", stateArray).equals(state) ? null : String.join(";", stateArray);
     }
 
+    /**
+     * Checks if there are any agents in the cells adjacent to neo
+     * A helper function to the AgentIllegalMoves
+     * @param neoX : The X-coordinate of neo
+     * @param neoY : The Y-coordinate of neo
+     * @param agentX : The X-coordinate of agent
+     * @param agentY : The Y-coordinate of agent
+     * @return A boolean that states whether there is an agent in the adjacent cell of neo, whether in the x-axis or the y-axis
+     */
+
     private static boolean IsAdjacent(String neoX, String neoY, String agentX, String agentY) {
         int neoXInt = Integer.parseInt(neoX);
         int agentXInt = Integer.parseInt(agentX);
@@ -522,6 +575,12 @@ public class Matrix extends GeneralSearch {
             return true;
         else return neoYInt == agentYInt && (neoXInt == agentXInt + 1 || neoXInt == agentXInt - 1);
     }
+
+    /**
+     * Takes a node and applies the kill operation upon it and returns a updated state
+     * @param node : A node object that we want to apply kill upon
+     * @return A new state with all agents/mutated hostages in the adjacent cells around neo are killed
+     */
 
     private static String Kill(Node node) {
         String state = node.getState();
@@ -563,6 +622,13 @@ public class Matrix extends GeneralSearch {
         return String.join(";", stateArray);
     }
 
+    /**
+     * Takes node and increments the hostages' and carried hostages' damage with 2
+     * and checks if we have any new mutated agents
+     * @param node : A node object that we want to update its state
+     * @return A new state with the updated hostages' and carried hostages' damage and with new mutated hostages if any
+     */
+
     private static String UpdateDamage(Node node) {
         String[] stateArray = node.getState().split(";", 13);
         ArrayList<String> hostages = new ArrayList<>(Arrays.asList(node.extractHostages()));
@@ -598,6 +664,12 @@ public class Matrix extends GeneralSearch {
         return String.join(";", stateArray);
     }
 
+    /**
+     * Takes a node object to apply the takePill operation upon it and returns a updated state
+     * @param node : A node object that we want to apply the takePill operation upon
+     * @return A new state with the updated damage of neo, hostages and carried hostages
+     */
+
     private static String TakePill(Node node) {
         String state = node.getState();
         String[] neoPosition = node.extractNeoPos();
@@ -630,6 +702,12 @@ public class Matrix extends GeneralSearch {
 
         return String.join(";", arrayState).equals(state) ? null : String.join(";", arrayState);
     }
+
+    /**
+     * Takes a node object to apply the fly operation upon
+     * @param node : A node object that we want to apply the fly operation upon
+     * @return A new state with the updated neo's position
+     */
 
     private static String Fly(Node node) {
         String state = node.getState();
@@ -755,15 +833,25 @@ public class Matrix extends GeneralSearch {
         return cost;
     }
 
+    /**
+     * Takes an array and prints it
+     * @param array : A 1D array
+     */
+
     private static void print1DArray(String[] array){
         for (String s : array) {
             if (array.length > 1)
-                System.out.println(s + ", ");
+                System.out.print(s + ", ");
             else
                 System.out.println(s);
         }
         System.out.println();
     }
+
+    /**
+     * Takes a 2D array and prints it
+     * @param array : A 2D array
+     */
 
     public static void print2DArray(String[][] array){
         for (String[] strings : array) {
@@ -774,9 +862,14 @@ public class Matrix extends GeneralSearch {
         }
     }
 
-    private static void printGrid(GeneralSearch problem){
+    /**
+     * Takes a string state and visualizes the grid
+     * @param grid : A string state representing the grid
+     */
 
-        String[] state = problem.createInitialNode().getState().split(";", 17);
+    private static void printGrid(String grid){
+
+        String[] state = grid.split(";", 17);
         String[] gridSize = state[0].split(",",2);
         String[][] output = new String[Integer.parseInt(gridSize[0])][Integer.parseInt(gridSize[1])];
         for(int i=0;i< output.length;i++)
@@ -847,103 +940,28 @@ public class Matrix extends GeneralSearch {
         print2DArray(output);
     }
 
-    public static void visualize(GeneralSearch problem, String[] path){
-        printGrid(problem);
-        System.out.println("------------------------------------------------------------------------");
+    /**
+     * It visualizes the path taken by the initial node to reach the goal by printing the operator done and
+     * the new state
+     * @param problem : Initial grid given
+     * @param generatedOutput : The path taken to reach the goal node
+     */
+
+    public static void visualize(GeneralSearch problem, String generatedOutput){
         String[] carriedHostages = new String[0];
-
+        String[] pathWithCommas  = generatedOutput.split(";", 5);
+        String[] path = pathWithCommas[0].split(",");
         String newState = problem.createInitialNode().getState();
-
+        printGrid(newState);
+        System.out.println("------------------------------------------------------------------------");
         for(int i=0;i< path.length;i++){
-            switch (path[i]) {
-                case "up": {
-                    System.out.println("Operator: Up");
-                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
-                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
-                    System.out.print("Carried Hostages' Damage: ");
-                    print1DArray(carriedHostages);
-                    System.out.println();
-                    printGrid(problem);
-                };break;
-
-                case "down": {
-                    System.out.println("Operator: Down");
-                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
-                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
-                    System.out.print("Carried Hostages' Damage: ");
-                    print1DArray(carriedHostages);
-                    System.out.println();
-                    printGrid(problem);
-                };break;
-
-                case "right": {
-                    System.out.println("Operator: Right");
-                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
-                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
-                    System.out.print("Carried Hostages' Damage: ");
-                    print1DArray(carriedHostages);
-                    System.out.println();
-                    printGrid(problem);
-                };break;
-
-                case "left": {
-                    System.out.println("Operator: Left");
-                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
-                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
-                    System.out.print("Carried Hostages' Damage: ");
-                    print1DArray(carriedHostages);
-                    System.out.println();
-                    printGrid(problem);
-                };break;
-
-                case "fly": {
-                    System.out.println("Operator: Fly");
-                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
-                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
-                    System.out.print("Carried Hostages' Damage: ");
-                    print1DArray(carriedHostages);
-                    System.out.println();
-                    printGrid(problem);
-                };break;
-
-                case "carry":{
-                    System.out.println("Operator: Carry");
-                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
-                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
-                    System.out.print("Carried Hostages' Damage: ");
-                    print1DArray(carriedHostages);
-                    System.out.println();
-                    printGrid(problem);
-                }break;
-
-                case "drop":{
-                    System.out.println("Operator: Drop");
-                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
-                    System.out.print("Carried Hostages' Damage: ");
-                    print1DArray(carriedHostages);
-                    System.out.println();
-                    printGrid(problem);
-                }break;
-
-                case "kill":{
-                    System.out.println("Operator: Kill");
-                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
-                    System.out.print("Carried Hostages' Damage: ");
-                    print1DArray(carriedHostages);
-                    System.out.println();
-                    printGrid(problem);
-                }break;
-
-                case "takePill":{
-                    System.out.println("Operator: Take pill");
-                    newState = problem.Expand(new Node(null, newState), path[i]).getState();
-                    carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
-                    System.out.print("Carried Hostages' Damage: ");
-                    print1DArray(carriedHostages);
-                    System.out.println();
-                    printGrid(problem);
-                }break;
-            }
+            System.out.println("Operator: " + path[i]);
+            newState = problem.Expand(new Node(null, newState), path[i]).getState();
+            carriedHostages = new Node(null, newState).extractCarriedHostagesHP();
+            System.out.print("Carried Hostages' Damage: ");
+            print1DArray(carriedHostages);
+            System.out.println();
+            printGrid(newState);
             System.out.println("------------------------------------------------------------------------");
         }
     }
@@ -970,6 +988,5 @@ public class Matrix extends GeneralSearch {
 //            System.out.println(node.getState());
 //        }
 //        System.out.println(GoalTest(node));
-
     }
 }
