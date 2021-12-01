@@ -70,6 +70,10 @@ public class Node implements Comparable<Node> {
         return (pillPos[0].isEmpty()) ? new String[0] : pillPos;
     }
 
+    /**
+     * @return Array of Strings that represent the position of all pad pairs on the grid in the following form :
+     * [X11,Y11,X12,Y12,...,Xn1,Yn1,Xn2,Yn2], where n the total number of pad pairs in the grid.
+     */
     public String[] extractPadPos() {
         String[] array = state.split(";", 13);
         String posPad = array[6];
@@ -146,6 +150,9 @@ public class Node implements Comparable<Node> {
         return operator;
     }
 
+    /**
+     * @param operator
+     */
     public void setOperator(String operator) {
         this.operator = operator;
     }
@@ -157,6 +164,9 @@ public class Node implements Comparable<Node> {
         return depth;
     }
 
+    /**
+     * @param depth
+     */
     public void setDepth(int depth) {
         this.depth = depth;
     }
@@ -169,24 +179,42 @@ public class Node implements Comparable<Node> {
     }
 
     /**
-     * @return the cost of from the root to the current node.
+     * @return the cost of the path from the root to the current node.
      */
     public int getStepsCost() {
         return stepsCost;
     }
 
+    /**
+     * sets the path cost to the node.
+     * @param stepsCost value of the path cost.
+     */
     public void setStepsCost(int stepsCost) {
         this.stepsCost = stepsCost;
     }
 
+    /**
+     * @return heuristic cost of the node.
+     */
     public int getHeuristicCost() {
         return heuristicCost;
     }
 
+    /**
+     * assign a heuristic cost to the node.
+     * @param heuristicCost value of the heuristic cost.
+     */
     public void setHeuristicCost(int heuristicCost) {
         this.heuristicCost = heuristicCost;
     }
 
+    /**
+     * Compares the current node to another node, to check which node has higher priority (will take effect in enqueuing
+     * nodes in the priority queue).
+     * @param node : which we want to compare to this node instance.
+     * @return -1 if this node instance has higher priority than the other node, 0 if they have equal priorities, or 1
+     * if the other node has higher priority.
+     */
     @Override
     public int compareTo(Node node) {
         String strategy = Matrix.getGlobalQueuingFunction();
@@ -198,6 +226,14 @@ public class Node implements Comparable<Node> {
         }
     }
 
+    /**
+     * A helper function to the compareTo method, which compares the two nodes optimally and considers the heuristic cost
+     * if required (in A* algorithms).
+     *
+     * @param node : which we want to compare to this node instance.
+     * @return -1 if this node instance has higher priority than the other node, 0 if they have equal priorities, or 1
+     * if the other node has higher priority.
+     */
     private int OptimalCompareTo(Node node) {
         if (this.extractDeathsCount() < node.extractDeathsCount())
             return -1;
@@ -206,6 +242,13 @@ public class Node implements Comparable<Node> {
         else return Integer.compare(this.getStepsCost() + this.getHeuristicCost(), node.getStepsCost() + node.getHeuristicCost());
     }
 
+    /**
+     * A helper function to the compareTo method, which compares the two nodes considering the heuristic cost only.
+     *
+     * @param node : which we want to compare to this node instance.
+     * @return -1 if this node instance has higher priority than the other node, 0 if they have equal priorities, or 1
+     * if the other node has higher priority.
+     */
     private int GreedyCompareTo(Node node) {
         if (this.extractDeathsCount() < node.extractDeathsCount())
             return -1;
