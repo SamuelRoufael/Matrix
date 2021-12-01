@@ -16,6 +16,9 @@ public abstract class GeneralSearch {
 	 */
 	public abstract Node createInitialNode();
 
+	/**
+	 * @return a function that returns the grid String.
+	 */
 	public abstract String getGrid();
 
 	/**
@@ -72,6 +75,15 @@ public abstract class GeneralSearch {
 	 */
 	public abstract int CalculateHeuristicTwo(Node node);
 
+	/**
+	 * Takes a search problem along with the queuing strategy to follow during the
+	 * searching operation.
+	 *
+	 * @param problem : Instance of search the problem to search upon (Matrix).
+	 * @param queuingFunction : The queuing function followed in the search criteria.
+	 * @return the sequence of operations to reach the goal state (or null of no solution), the number of deaths,
+	 * the number of kills, and the total number of expanded nodes.
+	 */
 	public static Node Search(GeneralSearch problem, QueuingFunction queuingFunction) {
 		if (queuingFunction == QueuingFunction.ENQUEUE_END || queuingFunction == QueuingFunction.ENQUEUE_FRONT || queuingFunction == QueuingFunction.ENQUEUE_END_IDS)
 			return QueueSearch(problem, queuingFunction);
@@ -79,6 +91,15 @@ public abstract class GeneralSearch {
 			return PriorityQueueSearch(problem, queuingFunction);
 	}
 
+	/**
+	 *  A helper function to the Search Method that uses a linkedList as a queue to handle simple operation like adding
+	 *  Nodes to the Front/End of the queue or pop the Front Node. It handles DF, BF, IDs Algorithms.
+	 *
+	 * @param problem : Instance of search the problem to search upon (Matrix).
+	 * @param queuingFunction : The queuing function followed in the search criteria.
+	 * @return : the sequence of operations to reach the goal state (or null of no solution), the number of deaths,
+	 * the number of kills, and the total number of expanded nodes.
+	 */
 	private static Node QueueSearch(GeneralSearch problem, QueuingFunction queuingFunction) {
 		LinkedList<Node> nodesQueue = new LinkedList<>();
 
@@ -140,6 +161,15 @@ public abstract class GeneralSearch {
 		}
 	}
 
+	/**
+	 * A helper function the Search Method that uses a priorityQueue to handle the order of the Nodes. It handles UC,
+	 * GR1, GR2, A1, A2 Algorithms.
+	 *
+	 * @param problem : Instance of search the problem to search upon (Matrix).
+	 * @param queuingFunction : The queuing function followed in the search criteria.
+	 * @return : the sequence of operations to reach the goal state (or null of no solution), the number of deaths,
+	 * the number of kills, and the total number of expanded nodes.
+	 */
 	private static Node PriorityQueueSearch(GeneralSearch problem, QueuingFunction queuingFunction) {
 		PriorityQueue<Node> priorityQueue = new PriorityQueue<>();
 		priorityQueue.add(problem.getInitialNode());
@@ -178,6 +208,11 @@ public abstract class GeneralSearch {
 		return null;
 	}
 
+	/**
+	 * @param node : A node object which state is a goal state, or null of no Solution was found.
+	 * @return a String that represents the path of operators from the root to the goal node, or No Solution if no
+	 * Solution was found.
+	 */
 	public static String GenerateOutput(Node node) {
 
 		if (node == null) {
