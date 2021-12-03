@@ -102,7 +102,6 @@ public abstract class GeneralSearch {
 	 */
 	private static Node QueueSearch(GeneralSearch problem, QueuingFunction queuingFunction) {
 		LinkedList<Node> nodesQueue = new LinkedList<>();
-
 		if (queuingFunction == QueuingFunction.ENQUEUE_END_IDS) {
 
 			int currentMaxDepth = 0;

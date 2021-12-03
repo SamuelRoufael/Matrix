@@ -250,10 +250,6 @@ public class Node implements Comparable<Node> {
      * if the other node has higher priority.
      */
     private int GreedyCompareTo(Node node) {
-        if (this.extractDeathsCount() < node.extractDeathsCount())
-            return -1;
-        else if (this.extractDeathsCount() > node.extractDeathsCount())
-            return 1;
         return Integer.compare(this.getHeuristicCost(), node.getHeuristicCost());
     }
 

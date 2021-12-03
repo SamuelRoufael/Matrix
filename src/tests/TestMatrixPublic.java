@@ -287,9 +287,9 @@ public class TestMatrixPublic {
 
 	@Test(timeout = 10000)
 	public void testd6() throws Exception {
-		String solution = Matrix.solve(grid6, "ID", false);
+		String solution = Matrix.solve(grid7, "ID", false);
 		solution = solution.replace(" ", "");
-		assertTrue("The output actions do not lead to a goal state.", applyPlan(grid6, solution));
+		assertTrue("The output actions do not lead to a goal state.", applyPlan(grid7, solution));
 	}
 
 	@Test(timeout = 10000)
@@ -810,7 +810,7 @@ public class TestMatrixPublic {
 
 			
 			public static boolean applyPlan(String grid, String solution) {
-				System.out.println(solution);
+//				System.out.println(solution);
 				String[] solutionArray  = solution.split(";");
 				String plan = solutionArray[0];
 				int blue = Integer.parseInt(solutionArray[1]);
@@ -901,11 +901,11 @@ public class TestMatrixPublic {
 					}
 
 					if(!linkin)
-						return false;		
-					
-						
-						
+						return false;
 				}
+
+				System.out.println(solution);
+
 				return s.grace() && s.m23 == doors && s.m10.size() == blue;
 			}
 }
