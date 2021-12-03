@@ -302,7 +302,7 @@ public class Matrix extends GeneralSearch {
     }
 
     /**
-     * Finds all operation that if done by neo will end with an agent.
+     * Finds all operation that if done by neo will clash with an agent.
      * @param agents : Array of available agents in the state
      * @param neo : Neo's current position
      * @return A list of the operators that neo is allowed to do
